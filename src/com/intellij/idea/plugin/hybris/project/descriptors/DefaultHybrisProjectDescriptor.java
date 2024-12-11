@@ -730,19 +730,11 @@ public class DefaultHybrisProjectDescriptor implements HybrisProjectDescriptor {
         scanForSubdirectories(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, rootProjectDirectory.toPath(), progressListenerProcessor);
     }
 
-    private void scanForSubdirectories(final Map<DIRECTORY_TYPE, Set<File>> moduleRootMap, final Set<File> excludedFromScanning, final boolean acceptOnlyHybrisModules, final Path rootProjectDirectory, final TaskProgressProcessor<File> progressListenerProcessor) {
+    private void scanForSubdirectories(final Map<DIRECTORY_TYPE, Set<File>> moduleRootMap, final Set<File> excludedFromScanning, final boolean acceptOnlyHybrisModules, final Path rootProjectDirectory, final TaskProgressProcessor<File> progressListenerProcessor) throws IOException, InterruptedException {
         if (isPathInWSLDistribution(rootProjectDirectory)) {
-            try {
-                scanSubdirectoriesWSL(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, rootProjectDirectory, progressListenerProcessor);
-            } catch (IOException | InterruptedException e) {
-                LOG.error("Error while scanning subdirectories in wsl", e);
-            }
+            scanSubdirectoriesWSL(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, rootProjectDirectory, progressListenerProcessor);
         } else {
-            try {
-                scanSubdirectories(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, rootProjectDirectory, progressListenerProcessor);
-            } catch (IOException | InterruptedException e) {
-                LOG.error("Error while scanning subdirectories", e);
-            }
+            scanSubdirectories(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, rootProjectDirectory, progressListenerProcessor);
         }
     }
 
@@ -778,42 +770,28 @@ public class DefaultHybrisProjectDescriptor implements HybrisProjectDescriptor {
     }
 
     private void scanSubdirectoriesWSL(@NotNull final Map<DIRECTORY_TYPE, Set<File>> moduleRootMap, final Set<File> excludedFromScanning, final boolean acceptOnlyHybrisModules, @NotNull final Path rootProjectDirectory, @Nullable final TaskProgressProcessor<File> progressListenerProcessor) throws InterruptedException, IOException {
-        if (!Files.isDirectory(rootProjectDirectory)) {
-            return;
-        }
+        if (!Files.isDirectory(rootProjectDirectory)) return;
 
         try (final Stream<Path> stream = Files.list(rootProjectDirectory)) {
-            stream.filter(file -> {
-                try {
-                    return Objects.nonNull(file) && Files.isDirectory(file) && !isDirectoryExcluded(file) && (!Files.isSymbolicLink(file) || followSymlink);
-                } catch (Exception e) {
-                    LOG.error("Error while filtering directories", e);
-                    return false;
-                }
-            }).forEach(file -> {
-                try {
-                    findModuleRoots(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, file.toFile(), progressListenerProcessor);
-                } catch (IOException | InterruptedException e) {
-                    LOG.error("Error while processing directories", e);
-                }
-            });
+            final var moduleRoots = stream
+                .filter(Objects::nonNull)
+                .filter(Files::isDirectory)
+                .filter(Predicate.not(this::isDirectoryExcluded))
+                .filter(file -> !Files.isSymbolicLink(file) || followSymlink)
+                .map(Path::toFile)
+                .toList();
+            for (final var moduleRoot : moduleRoots) {
+                findModuleRoots(moduleRootMap, excludedFromScanning, acceptOnlyHybrisModules, moduleRoot, progressListenerProcessor);
+            }
         }
     }
 
-
     public static boolean isPathInWSLDistribution(@NotNull final Path rootProjectDirectory) {
-        try {
-            for (WSLDistribution distribution : WslDistributionManager.getInstance().getInstalledDistributions()) {
-                String wslRoot = String.valueOf(distribution.getUNCRootPath());
-                if (StringUtils.isNotBlank(wslRoot) && rootProjectDirectory.toString().startsWith(wslRoot)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            LOG.error("Error while checking if path is in WSL distribution", e);
-            return false;
-        }
+        return WslDistributionManager.getInstance().getInstalledDistributions().stream()
+            .map(WSLDistribution::getUNCRootPath)
+            .map(String::valueOf)
+            .filter(StringUtils::isNoneBlank)
+            .anyMatch(wslRoot -> rootProjectDirectory.toString().startsWith(wslRoot));
     }
 
     private boolean isDirectoryExcluded(final Path file) {
