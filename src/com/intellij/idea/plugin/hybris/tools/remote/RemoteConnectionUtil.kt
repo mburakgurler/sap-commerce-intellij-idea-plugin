@@ -20,20 +20,24 @@ package com.intellij.idea.plugin.hybris.tools.remote
 
 import ai.grazie.utils.toLinkedSet
 import com.intellij.credentialStore.Credentials
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.idea.plugin.hybris.common.HybrisConstants
 import com.intellij.idea.plugin.hybris.properties.PropertyService
 import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
 import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
 import com.intellij.idea.plugin.hybris.settings.components.ProjectSettingsComponent
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import org.apache.commons.lang3.StringUtils
 import java.util.*
 
 object RemoteConnectionUtil {
 
-    fun generateUrl(ssl: Boolean, host: String?, port: String?, webroot: String?) = buildString {
+    fun generateUrl(ssl: Boolean, host: String?, port: String?, webroot: String?, wsl: Boolean) = buildString {
         if (ssl) append(HybrisConstants.HTTPS_PROTOCOL)
         else append(HybrisConstants.HTTP_PROTOCOL)
-        append(host?.trim() ?: "")
+        if (wsl) append(findWslIpUsingProjectPath(host)?.trim() ?: "")
+        else append(host?.trim() ?: "")
         port
             ?.takeIf { it.isNotBlank() }
             ?.takeUnless { "443" == it && ssl }
@@ -54,6 +58,23 @@ object RemoteConnectionUtil {
                 )
             }
             ?: ""
+    }
+
+    fun findWslIpUsingProjectPath(host: String?): String? {
+        val projectPath = ProjectManager.getInstance().getOpenProjects().firstOrNull()?.basePath;
+        if (StringUtils.isEmpty(projectPath)) return host
+        val normalizedProjectPath = projectPath?.replace("/", "\\")
+        val installedDistros = WslDistributionManager.getInstance().installedDistributions
+        val matchingDistro = installedDistros.firstOrNull{ normalizedProjectPath.toString().startsWith(it.getUNCRootPath().toString()) }
+        return matchingDistro?.let { distro ->
+            try {
+                val readWslIpMethod = distro::class.java.getDeclaredMethod("readWslIp")
+                readWslIpMethod.isAccessible = true
+                readWslIpMethod.invoke(distro)?.toString()
+            } catch (e: Exception) {
+                host
+            }
+        } ?: host
     }
 
     fun getActiveRemoteConnectionSettings(project: Project, type: RemoteConnectionType): RemoteConnectionSettings {

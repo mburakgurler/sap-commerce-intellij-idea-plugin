@@ -144,6 +144,13 @@ class RemoteHacConnectionDialog(
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .component
             }.layout(RowLayout.PARENT_GRID)
+            row {
+                isWslCheckBox = checkBox("WSL")
+                    .selected(settings.isWsl)
+                    .onChanged { urlPreviewLabel.text = generateUrl() }
+                    .onChanged { hostTextField.text = generateWslIp() }
+                    .component
+            }.layout(RowLayout.PARENT_GRID)
         }
 
         group("Credentials") {

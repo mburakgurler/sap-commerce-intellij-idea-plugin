@@ -66,6 +66,7 @@ abstract class AbstractRemoteConnectionDialog(
     protected lateinit var passwordTextField: JBPasswordField
     protected lateinit var testConnectionLabel: Cell<JLabel>
     protected lateinit var testConnectionComment: Cell<JEditorPane>
+    protected lateinit var isWslCheckBox: JBCheckBox
     private var testConnectionButton: Action = object : DialogWrapperAction("Test Connection") {
 
         @Serial
@@ -165,7 +166,10 @@ abstract class AbstractRemoteConnectionDialog(
         sslProtocolCheckBox.isSelected,
         hostTextField.text,
         portTextField.text,
-        webrootTextField.text
+        webrootTextField.text,
+        isWslCheckBox.isSelected
     )
+
+    protected fun generateWslIp() = RemoteConnectionUtil.findWslIpUsingProjectPath(hostTextField.text)
 
 }
