@@ -9,6 +9,12 @@
 ### `Type System` enhancements
 - Migrated the Type System Global Meta Model to coroutines [#1287](https://github.com/epam/sap-commerce-intellij-idea-plugin/pull/1287)
 
+### `Bean System` enhancements
+- Migrated the Bean System Global Meta Model to coroutines [#1289](https://github.com/epam/sap-commerce-intellij-idea-plugin/pull/1289)
+
+### Fixes
+- Fixed creation of the non-ssl remote configuration [#1290](https://github.com/epam/sap-commerce-intellij-idea-plugin/pull/1290)
+
 ## [2024.3.2]
 
 ### `SAP CX Logging` enhancements
