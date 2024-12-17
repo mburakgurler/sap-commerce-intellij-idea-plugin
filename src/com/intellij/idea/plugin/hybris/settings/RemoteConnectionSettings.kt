@@ -44,7 +44,6 @@ class RemoteConnectionSettings : BaseState(), Comparable<RemoteConnectionSetting
     var port by string(null)
     var isSsl by property(true)
     var sslProtocol by string(HybrisConstants.DEFAULT_SSL_PROTOCOL)
-    var isWsl by property(false)
 
     var solrWebroot by string("solr")
     var hacWebroot by string("")
@@ -65,8 +64,8 @@ class RemoteConnectionSettings : BaseState(), Comparable<RemoteConnectionSetting
     val generatedURL: String
         get() {
             return when (type) {
-                RemoteConnectionType.Hybris -> RemoteConnectionUtil.generateUrl(isSsl, hostIP, port, hacWebroot, isWsl)
-                RemoteConnectionType.SOLR -> RemoteConnectionUtil.generateUrl(isSsl, hostIP, port, solrWebroot, isWsl)
+                RemoteConnectionType.Hybris -> RemoteConnectionUtil.generateUrl(isSsl, hostIP, port, hacWebroot)
+                RemoteConnectionType.SOLR -> RemoteConnectionUtil.generateUrl(isSsl, hostIP, port, solrWebroot)
             }
         }
 

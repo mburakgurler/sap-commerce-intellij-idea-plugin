@@ -167,9 +167,5 @@ abstract class AbstractRemoteConnectionDialog(
         hostTextField.text,
         portTextField.text,
         webrootTextField.text,
-        isWslCheckBox.isSelected
     )
-
-    protected fun generateWslIp() = RemoteConnectionUtil.findWslIpUsingProjectPath(hostTextField.text)
-
 }
