@@ -168,9 +168,9 @@ class RemoteSolrConnectionDialog(
                     wslProxyCheckBox = checkBox("Enable wsl.proxy.connect.localhost")
                         .comment("This will use the wsl.proxy.connect.localhost registry setting if available.")
                         .visible(false)
-                        .selected(Registry.`is`("wsl.proxy.connect.localhost"))
+                        .selected(Registry.`is`(WSL_PROXY_CONNECT_LOCALHOST))
                         .onChanged {
-                            Registry.run { get("wsl.proxy.connect.localhost").setValue(!`is`("wsl.proxy.connect.localhost")) }
+                            Registry.run { get(WSL_PROXY_CONNECT_LOCALHOST).setValue(!`is`(WSL_PROXY_CONNECT_LOCALHOST)) }
                             updateWslIp(distributions)
                         }
                         .component
@@ -224,9 +224,9 @@ class RemoteSolrConnectionDialog(
     }
 
     private fun updateWslIp(distributions: List<WSLDistribution>) {
-        val selected = wslDistributionComboBox.selectedItem as String
+        val selected = wslDistributionComboBox.selectedItem as? String
         val wslIp = distributions.find { it.msId == selected }?.wslIpAddress.toString()
-        hostTextField.text = wslIp.replace("/", "")
+        hostTextField.text = wslIp?.replace("/", "").orEmpty()
         urlPreviewLabel.text = generateUrl()
     }
 
