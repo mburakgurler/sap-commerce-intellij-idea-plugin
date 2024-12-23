@@ -20,6 +20,7 @@ package com.intellij.idea.plugin.hybris.toolwindow
 
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
 import com.intellij.idea.plugin.hybris.tools.remote.RemoteConnectionUtil
@@ -45,6 +46,7 @@ import java.awt.event.ActionEvent
 import java.io.Serial
 import java.util.*
 import javax.swing.Action
+import javax.swing.JComboBox
 import javax.swing.JEditorPane
 import javax.swing.JLabel
 
@@ -69,6 +71,7 @@ abstract class AbstractRemoteConnectionDialog(
     protected lateinit var testConnectionLabel: Cell<JLabel>
     protected lateinit var testConnectionComment: Cell<JEditorPane>
     protected lateinit var isWslCheckBox: JBCheckBox
+    lateinit var wslDistributionComboBox: JComboBox<String>
     private var testConnectionButton: Action = object : DialogWrapperAction("Test Connection") {
 
         @Serial
@@ -170,4 +173,16 @@ abstract class AbstractRemoteConnectionDialog(
         portTextField.text,
         webrootTextField.text,
     )
+
+    fun updateWslIp(distributions: List<WSLDistribution>) {
+        val wslIp = distributions.find { it.msId == wslDistributionComboBox.selectedItem as? String }
+            ?.wslIpAddress
+            ?.toString()
+            ?.replace("/", "")
+            ?: ""
+        hostTextField.text = wslIp
+    }
+
+    fun isWindows() = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("win")
+
 }

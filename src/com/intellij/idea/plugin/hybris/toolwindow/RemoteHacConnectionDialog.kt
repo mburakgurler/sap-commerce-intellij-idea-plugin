@@ -47,7 +47,6 @@ class RemoteHacConnectionDialog(
 ) : AbstractRemoteConnectionDialog(project, parentComponent, settings, "Remote SAP Commerce Instance") {
 
     private lateinit var sslProtocolComboBox: ComboBox<String>
-    private lateinit var wslDistributionComboBox: JComboBox<String>
     private lateinit var wslProxyCheckBox: JBCheckBox
     private lateinit var wslProxyWarningComment: JEditorPane
     private lateinit var wslDistributionText: Cell<JLabel>
@@ -58,6 +57,7 @@ class RemoteHacConnectionDialog(
         hostIP = hostTextField.text
         port = portTextField.text
         isSsl = sslProtocolCheckBox.isSelected
+        isWsl = isWslCheckBox.isSelected
         sslProtocol = sslProtocolComboBox.selectedItem?.toString() ?: ""
         hacWebroot = webrootTextField.text
         credentials = Credentials(usernameTextField.text, String(passwordTextField.password))
@@ -158,10 +158,11 @@ class RemoteHacConnectionDialog(
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .component
             }.layout(RowLayout.PARENT_GRID)
-            if (System.getProperty("os.name").lowercase(Locale.getDefault()).contains("win")) {
+            if (isWindows()) {
                 val distributions = WslDistributionManager.getInstance().installedDistributions
                 row {
                     isWslCheckBox = checkBox("WSL")
+                        .bindSelected(settings::isWsl)
                         .selected(false)
                         .visible(distributions.isNotEmpty())
                         .onChanged {
@@ -234,12 +235,4 @@ class RemoteHacConnectionDialog(
             }.layout(RowLayout.PARENT_GRID)
         }
     }
-
-    private fun updateWslIp(distributions: List<WSLDistribution>) {
-        val selected = wslDistributionComboBox.selectedItem as? String
-        val wslIp = distributions.find { it.msId == selected }?.wslIpAddress.toString()
-        hostTextField.text = wslIp?.replace("/", "").orEmpty()
-        urlPreviewLabel.text = generateUrl()
-    }
-
 }
