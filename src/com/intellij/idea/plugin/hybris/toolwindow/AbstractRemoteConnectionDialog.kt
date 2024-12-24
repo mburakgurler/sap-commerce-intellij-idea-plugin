@@ -21,6 +21,7 @@ package com.intellij.idea.plugin.hybris.toolwindow
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
 import com.intellij.idea.plugin.hybris.tools.remote.RemoteConnectionUtil
@@ -32,23 +33,20 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBPasswordField
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.text
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.event.ActionEvent
 import java.io.Serial
 import java.util.*
-import javax.swing.Action
-import javax.swing.JComboBox
-import javax.swing.JEditorPane
-import javax.swing.JLabel
+import javax.swing.*
 
 const val WSL_PROXY_CONNECT_LOCALHOST = "wsl.proxy.connect.localhost"
 
@@ -71,7 +69,10 @@ abstract class AbstractRemoteConnectionDialog(
     protected lateinit var testConnectionLabel: Cell<JLabel>
     protected lateinit var testConnectionComment: Cell<JEditorPane>
     protected lateinit var isWslCheckBox: JBCheckBox
-    lateinit var wslDistributionComboBox: JComboBox<String>
+    private lateinit var wslDistributionComboBox: JComboBox<String>
+    private lateinit var wslProxyCheckBox: JBCheckBox
+    private lateinit var wslProxyWarningComment: JEditorPane
+    private lateinit var wslDistributionText: Cell<JLabel>
     private var testConnectionButton: Action = object : DialogWrapperAction("Test Connection") {
 
         @Serial
@@ -184,5 +185,62 @@ abstract class AbstractRemoteConnectionDialog(
     }
 
     fun isWindows() = System.getProperty("os.name").lowercase(Locale.getDefault()).contains("win")
+
+    fun Panel.wslHostConfiguration() {
+        val distributions = WslDistributionManager.getInstance().installedDistributions
+        row {
+            isWslCheckBox = checkBox("WSL")
+                .bindSelected(settings::isWsl)
+                .selected(false)
+                .visible(distributions.isNotEmpty())
+                .onChanged {
+                    val selected = isWslCheckBox.isSelected
+                    val multipleDistros = distributions.isNotEmpty()
+                    wslDistributionComboBox.isVisible = selected && multipleDistros
+                    wslDistributionText.visible(selected)
+                    wslProxyCheckBox.isVisible = selected
+                    wslProxyWarningComment.isVisible = selected
+                    urlPreviewLabel.text = generateUrl()
+                }
+                .component
+        }.layout(RowLayout.PARENT_GRID)
+        val installedDistros = distributions.map { it.msId }
+        if (installedDistros.isNotEmpty()) {
+            row {
+                wslDistributionText = label("WSL distribution:").visible(false)
+                wslDistributionComboBox = comboBox(DefaultComboBoxModel(installedDistros.toTypedArray()))
+                    .align(AlignX.FILL)
+                    .visible(false)
+                    .onChanged {
+                        updateWslIp(distributions)
+                    }
+                    .component
+            }.layout(RowLayout.PARENT_GRID)
+        } else {
+            row {
+                comment("No WSL distributions are installed.")
+                    .visible(false)
+                    .component
+            }.layout(RowLayout.PARENT_GRID)
+        }
+        row {
+            wslProxyCheckBox = checkBox("Enable wsl.proxy.connect.localhost")
+                .comment("This will use the wsl.proxy.connect.localhost registry setting if available.")
+                .visible(false)
+                .selected(Registry.`is`(WSL_PROXY_CONNECT_LOCALHOST))
+                .onChanged {
+                    Registry.run { get(WSL_PROXY_CONNECT_LOCALHOST).setValue(!`is`(WSL_PROXY_CONNECT_LOCALHOST)) }
+                    updateWslIp(distributions)
+                }
+                .component
+        }.layout(RowLayout.PARENT_GRID)
+        row {
+            wslProxyWarningComment =
+                comment("<strong>Warning:</strong> Connect to 127.0.0.1 on WSLProxy instead of public WSL IP which might be inaccessible due to routing issues.")
+                    .visible(false)
+                    .component
+        }.layout(RowLayout.PARENT_GRID)
+    }
+
 
 }
