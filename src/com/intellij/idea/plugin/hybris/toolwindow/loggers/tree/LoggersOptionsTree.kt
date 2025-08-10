@@ -19,8 +19,8 @@
 package com.intellij.idea.plugin.hybris.toolwindow.loggers.tree
 
 import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
-import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggerNode
-import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggerRootNode
+import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersNode
+import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersRootNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TreeUIHelper
@@ -37,7 +37,7 @@ private const val SEARCH_CAN_EXPAND = true
 
 class LoggersOptionsTree(val myProject: Project) : Tree(), Disposable {
 
-    private val myTreeModel = LoggersOptionsModel(LoggersOptionsTreeNode(LoggerRootNode(this)), myProject)
+    private val myTreeModel = LoggersOptionsModel(LoggersOptionsTreeNode(LoggersRootNode(this)))
 
     init {
         isRootVisible = false
@@ -45,7 +45,7 @@ class LoggersOptionsTree(val myProject: Project) : Tree(), Disposable {
 
         TreeUIHelper.getInstance().installTreeSpeedSearch(this, Convertor { treePath: TreePath ->
             when (val uObj = (treePath.lastPathComponent as DefaultMutableTreeNode).userObject) {
-                is LoggerNode -> return@Convertor uObj.name
+                is LoggersNode -> return@Convertor uObj.name
                 else -> return@Convertor ""
             }
         }, SEARCH_CAN_EXPAND)
@@ -53,14 +53,8 @@ class LoggersOptionsTree(val myProject: Project) : Tree(), Disposable {
 
     override fun dispose() = Unit
 
-    fun update(connections: Map<RemoteConnectionSettings, Boolean>) {
-        myTreeModel.reload(connections)
-    }
-
-    fun update() {
-        myTreeModel.reload()
-    }
-
+    fun update(connections: Map<RemoteConnectionSettings, Boolean>) = myTreeModel.reload(connections)
+    fun update() = myTreeModel.reload()
     fun addTreeModelListener(listener: TreeModelListener) = model.addTreeModelListener(listener)
 
     companion object {

@@ -18,13 +18,13 @@
 
 package com.intellij.idea.plugin.hybris.toolwindow.loggers.tree
 
-import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggerNode
+import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersNode
 import java.io.Serial
 import javax.swing.tree.DefaultMutableTreeNode
 
-class LoggersOptionsTreeNode(private val node: LoggerNode) : DefaultMutableTreeNode(node) {
+class LoggersOptionsTreeNode(private val node: LoggersNode) : DefaultMutableTreeNode(node) {
 
-    override fun toString() = node.toString()
+    override fun toString(): String = node.toString()
 
     companion object {
         @Serial
