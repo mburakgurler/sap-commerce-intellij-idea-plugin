@@ -1,3 +1,8 @@
+## [2025.2.2]
+
+### `SAP CX Logging` enhancements
+- Removed `CUSTOM` log level, use `INFO` as a fallback [#1522](https://github.com/epam/sap-commerce-intellij-idea-plugin/pull/1522)
+
 ## [2025.2.1]
 
 ### `Groovy` enhancements
