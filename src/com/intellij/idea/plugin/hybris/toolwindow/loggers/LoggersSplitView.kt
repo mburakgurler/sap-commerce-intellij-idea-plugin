@@ -30,6 +30,12 @@ import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersHacC
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.options.templates.BundledLoggersTemplateLoggersOptionsNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.options.templates.CustomLoggersTemplateLoggersOptionsNode
+import com.intellij.idea.plugin.hybris.ui.UiUtil.addMouseListener
+import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeModelListener
+import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeSelectionListener
+import com.intellij.idea.plugin.hybris.ui.UiUtil.pathData
+import com.intellij.idea.plugin.hybris.ui.event.MouseListener
+import com.intellij.idea.plugin.hybris.ui.event.TreeModelListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -38,17 +44,16 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.awt.event.MouseEvent
 import java.io.Serial
 import javax.swing.event.TreeModelEvent
-import javax.swing.event.TreeModelListener
-import javax.swing.event.TreeSelectionListener
 
 class LoggersSplitView(
     private val project: Project,
     private val coroutineScope: CoroutineScope
 ) : OnePixelSplitter(false, 0.25f), Disposable {
 
-    private val tree = LoggersOptionsTree(project)
+    private val tree = LoggersOptionsTree(project).apply { registerListeners(this) }
     private val loggersStateView = LoggersStateView(project, coroutineScope)
 
     init {
@@ -68,12 +73,9 @@ class LoggersSplitView(
                     updateTree(remoteConnection)
                 }
 
-                override fun onActiveSolrConnectionChanged(remoteConnection: RemoteConnectionSettings) = Unit
                 override fun onHybrisConnectionModified(remoteConnection: RemoteConnectionSettings) = tree.update()
             })
-        }
 
-        with(project.messageBus.connect(this)) {
             subscribe(CxLoggersStateListener.TOPIC, object : CxLoggersStateListener {
                 override fun onLoggersStateChanged(remoteConnection: RemoteConnectionSettings) {
                     tree.lastSelectedPathComponent
@@ -85,9 +87,6 @@ class LoggersSplitView(
                 }
             })
         }
-
-        tree.addTreeSelectionListener(treeSelectionListener())
-        tree.addTreeModelListener(treeModelListener())
     }
 
     private fun updateTree(settings: RemoteConnectionSettings) {
@@ -97,30 +96,32 @@ class LoggersSplitView(
         tree.update(connections)
     }
 
-    private fun treeSelectionListener() = TreeSelectionListener {
-        it.newLeadSelectionPath
-            ?.lastPathComponent
-            ?.asSafely<LoggersOptionsTreeNode>()
-            ?.userObject
-            ?.asSafely<LoggersNode>()
-            ?.let { node -> updateSecondComponent(node) }
-    }
-
-    private fun treeModelListener() = object : TreeModelListener {
-        override fun treeNodesChanged(e: TreeModelEvent) {
-            tree.selectionPath
-                ?.takeIf { e.treePath?.lastPathComponent == it.parentPath?.lastPathComponent }
-                ?.lastPathComponent
-                ?.asSafely<LoggersOptionsTreeNode>()
-                ?.userObject
-                ?.asSafely<LoggersNode>()
+    private fun registerListeners(tree: LoggersOptionsTree) = tree
+        .addTreeSelectionListener(tree) {
+            it.newLeadSelectionPath
+                ?.pathData(LoggersNode::class)
                 ?.let { node -> updateSecondComponent(node) }
         }
-
-        override fun treeNodesInserted(e: TreeModelEvent) = Unit
-        override fun treeNodesRemoved(e: TreeModelEvent) = Unit
-        override fun treeStructureChanged(e: TreeModelEvent) = Unit
-    }
+        .addTreeModelListener(tree, object : TreeModelListener {
+            override fun treeNodesChanged(e: TreeModelEvent) {
+                tree.selectionPath
+                    ?.takeIf { e.treePath?.lastPathComponent == it.parentPath?.lastPathComponent }
+                    ?.pathData(LoggersNode::class)
+                    ?.let { node -> updateSecondComponent(node) }
+            }
+        })
+        .addMouseListener(tree, object : MouseListener {
+            override fun mouseClicked(e: MouseEvent) {
+                tree
+                    .takeIf { e.getClickCount() == 2 && !e.isConsumed }
+                    ?.getPathForLocation(e.getX(), e.getY())
+                    ?.pathData(LoggersHacConnectionNode::class)
+                    ?.let {
+                        e.consume()
+                        CxLoggerAccess.getInstance(project).fetch(it.connectionSettings)
+                    }
+            }
+        })
 
     private fun updateSecondComponent(node: LoggersNode) {
         coroutineScope.launch {
@@ -137,7 +138,6 @@ class LoggersSplitView(
             }
         }
     }
-
 
     companion object {
         @Serial

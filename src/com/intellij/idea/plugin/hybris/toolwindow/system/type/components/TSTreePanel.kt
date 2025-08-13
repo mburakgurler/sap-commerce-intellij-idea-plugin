@@ -1,6 +1,6 @@
 /*
  * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
- * Copyright (C) 2019-2024 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -22,9 +22,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.idea.plugin.hybris.system.type.meta.TSGlobalMetaModel
 import com.intellij.idea.plugin.hybris.toolwindow.system.type.forms.*
 import com.intellij.idea.plugin.hybris.toolwindow.system.type.tree.TSTree
-import com.intellij.idea.plugin.hybris.toolwindow.system.type.tree.TreeNode
 import com.intellij.idea.plugin.hybris.toolwindow.system.type.tree.nodes.*
 import com.intellij.idea.plugin.hybris.toolwindow.system.type.view.TSViewSettings
+import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeModelListener
+import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeSelectionListener
+import com.intellij.idea.plugin.hybris.ui.UiUtil.pathData
+import com.intellij.idea.plugin.hybris.ui.event.TreeModelListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -32,16 +35,14 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.asSafely
 import java.io.Serial
 import javax.swing.event.TreeModelEvent
-import javax.swing.event.TreeModelListener
-import javax.swing.event.TreeSelectionListener
 
 class TSTreePanel(
     private val myProject: Project,
 ) : OnePixelSplitter(false, 0.25f), Disposable {
-    val tree: TSTree = TSTree(myProject)
+
+    val tree: TSTree = TSTree(myProject).apply { registerListeners(this) }
     private val myDefaultPanel = JBPanelWithEmptyText().withEmptyText(IdeBundle.message("empty.text.nothing.selected"))
     private val myMetaItemView: TSMetaItemView by lazy { TSMetaItemView(myProject) }
     private val myMetaEnumView: TSMetaEnumView by lazy { TSMetaEnumView(myProject) }
@@ -49,15 +50,11 @@ class TSTreePanel(
     private val myMetaCollectionView: TSMetaCollectionView by lazy { TSMetaCollectionView(myProject) }
     private val myMetaRelationView: TSMetaRelationView by lazy { TSMetaRelationView(myProject) }
     private val myMetaMapView: TSMetaMapView by lazy { TSMetaMapView(myProject) }
-    private val myTreeSelectionListener: TreeSelectionListener = treeSelectionListener()
-    private val myTreeModelListener: TreeModelListener = treeModelListener()
 
     init {
         firstComponent = JBScrollPane(tree)
         secondComponent = myDefaultPanel
 
-        tree.addTreeSelectionListener(myTreeSelectionListener)
-        tree.addTreeModelListener(myTreeModelListener)
         PopupHandler.installPopupMenu(tree, "TSView.ToolWindow.TreePopup", "TSView.ToolWindow.TreePopup")
 
         Disposer.register(this, tree)
@@ -67,34 +64,20 @@ class TSTreePanel(
         tree.update(globalMetaModel, changeType)
     }
 
-    override fun dispose() {
-        tree.removeTreeSelectionListener { myTreeSelectionListener }
-    }
-
-    private fun treeSelectionListener() = TreeSelectionListener { tls ->
-        val path = tls.newLeadSelectionPath
-        val component = path?.lastPathComponent
-        val node = (component as? TreeNode)?.userObject as? TSNode
-        updateSecondComponent(node)
-    }
-
-    private fun treeModelListener() = object : TreeModelListener {
-        override fun treeNodesChanged(e: TreeModelEvent) {
-            if (e.treePath?.lastPathComponent == tree.selectionPath?.parentPath?.lastPathComponent) {
-                val node = tree
-                    .selectionPath
-                    ?.lastPathComponent
-                    ?.asSafely<TreeNode>()
-                    ?.userObject
-                    ?.asSafely<TSNode>()
-                updateSecondComponent(node)
-            }
+    private fun registerListeners(tree: TSTree) = tree
+        .addTreeSelectionListener(tree) { event ->
+            event.newLeadSelectionPath
+                ?.pathData(TSNode::class)
+                ?.let { node -> updateSecondComponent(node) }
         }
-
-        override fun treeNodesInserted(e: TreeModelEvent) = Unit
-        override fun treeNodesRemoved(e: TreeModelEvent) = Unit
-        override fun treeStructureChanged(e: TreeModelEvent) = Unit
-    }
+        .addTreeModelListener(tree, object : TreeModelListener {
+            override fun treeNodesChanged(e: TreeModelEvent) {
+                tree.selectionPath
+                    ?.takeIf { it.parentPath?.lastPathComponent == e.treePath?.lastPathComponent }
+                    ?.pathData(TSNode::class)
+                    ?.let { updateSecondComponent(it) }
+            }
+        })
 
     private fun updateSecondComponent(node: TSNode?) {
         secondComponent = when (node) {
