@@ -20,16 +20,16 @@ package com.intellij.idea.plugin.hybris.toolwindow.ccv2.views
 
 import com.intellij.database.script.generator.concatWithSpace
 import com.intellij.idea.plugin.hybris.common.utils.HybrisIcons
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.CCv2Service
 import com.intellij.idea.plugin.hybris.tools.ccv2.actions.*
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2BuildDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2BuildStatus
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2DeploymentDto
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.ui.copyLink
 import com.intellij.idea.plugin.hybris.tools.ccv2.ui.date
 import com.intellij.idea.plugin.hybris.tools.ccv2.ui.sUser
-import com.intellij.idea.plugin.hybris.ui.UiUtil
+import com.intellij.idea.plugin.hybris.ui.scrollPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -226,7 +226,7 @@ class CCv2BuildDetailsView(
             }.visible(!isBuildInProgress)
         }
     }
-        .let { UiUtil.scrollPanel(it) }
+        .let { scrollPanel(it) }
 
 
     private fun buildDeploymentHistoryPanel(groupedDeployments: Map<String, List<CCv2DeploymentDto>>) = panel {

@@ -23,12 +23,12 @@ import com.intellij.idea.plugin.hybris.ccv1.api.PermissionsApi
 import com.intellij.idea.plugin.hybris.ccv1.api.ServiceApi
 import com.intellij.idea.plugin.hybris.ccv1.invoker.infrastructure.ApiClient
 import com.intellij.idea.plugin.hybris.ccv1.model.*
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
-import com.intellij.idea.plugin.hybris.settings.components.ApplicationSettingsComponent
+import com.intellij.idea.plugin.hybris.settings.ApplicationSettings
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2EnvironmentDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2MediaStorageDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2ServiceDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2ServiceReplicaDto
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.util.application
@@ -40,7 +40,7 @@ class CCv1Api {
 
     private val apiClient by lazy {
         ApiClient.builder
-            .readTimeout(ApplicationSettingsComponent.getInstance().state.ccv2ReadTimeout.toLong(), TimeUnit.SECONDS)
+            .readTimeout(ApplicationSettings.getInstance().state.ccv2ReadTimeout.toLong(), TimeUnit.SECONDS)
             .build()
     }
     private val environmentApi by lazy { EnvironmentApi(client = apiClient) }

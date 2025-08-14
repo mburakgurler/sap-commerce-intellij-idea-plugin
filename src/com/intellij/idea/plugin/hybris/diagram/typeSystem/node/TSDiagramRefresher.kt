@@ -1,6 +1,6 @@
 /*
- * This file is part of "SAP Commerce Developers Toolset" plugin for Intellij IDEA.
- * Copyright (C) 2019-2023 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -24,23 +24,23 @@ import com.intellij.diagram.presentation.DiagramLineType
 import com.intellij.idea.plugin.hybris.common.HybrisConstants
 import com.intellij.idea.plugin.hybris.common.utils.HybrisI18NBundleUtils.message
 import com.intellij.idea.plugin.hybris.diagram.typeSystem.node.graph.*
-import com.intellij.idea.plugin.hybris.settings.TypeSystemDiagramSettings
-import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
 import com.intellij.idea.plugin.hybris.system.type.meta.TSMetaModelAccess
 import com.intellij.idea.plugin.hybris.system.type.meta.model.*
 import com.intellij.idea.plugin.hybris.system.type.model.Cardinality
+import com.intellij.idea.plugin.hybris.system.type.settings.state.TypeSystemDiagramSettingsState
 import java.awt.Shape
 
 object TSDiagramRefresher {
 
     fun refresh(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, edges: MutableCollection<TSDiagramEdge>) {
-        val settings = DeveloperSettingsComponent.getInstance(model.project).state.typeSystemDiagramSettings
+        val settings = DeveloperSettings.getInstance(model.project).typeSystemDiagramSettings
 
         refreshNodes(model, nodesMap, settings)
         refreshEdges(model, nodesMap, edges)
     }
 
-    private fun refreshNodes(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettings) {
+    private fun refreshNodes(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettingsState) {
         nodesMap.clear()
 
         collectNodesItems(model, nodesMap, settings)
@@ -50,7 +50,7 @@ object TSDiagramRefresher {
         updatedCollapsedNodes(model, nodesMap, settings)
     }
 
-    private fun collectNodesItems(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettings) {
+    private fun collectNodesItems(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettingsState) {
         TSMetaModelAccess.getInstance(model.project).getAll()
             .asSequence()
             .filter { it.name != null }
@@ -82,7 +82,7 @@ object TSDiagramRefresher {
      * Nested dependencies will not be created as we're not interested at this stage in the complete picture.
      * If All possible dependencies are needed, another Type-Specific filter can be introduced with Scope = "All"
      */
-    private fun collectNodesDependencies(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettings) {
+    private fun collectNodesDependencies(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettingsState) {
         if (!model.isShowDependencies) return
 
         nodesMap.values
@@ -121,7 +121,7 @@ object TSDiagramRefresher {
      *
      * Also, it is possible to specify STOP Types for extent names to limit down amount of created "shared" Edges
      */
-    private fun collectNodesExtends(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettings) {
+    private fun collectNodesExtends(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettingsState) {
         nodesMap.values
             .flatMap { sourceNode ->
                 val graphNode = sourceNode.graphNode as? TSGraphNodeClassifier ?: return@flatMap emptyList()
@@ -141,7 +141,7 @@ object TSDiagramRefresher {
             .forEach { nodesMap[it.graphNode.name] = it }
     }
 
-    private fun updatedCollapsedNodes(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettings) {
+    private fun updatedCollapsedNodes(model: TSDiagramDataModel, nodesMap: MutableMap<String, TSDiagramNode>, settings: TypeSystemDiagramSettingsState) {
         if (settings.nodesCollapsedByDefault) {
             if (model.modificationCount == 0L) {
                 model.collapseAllNodes()

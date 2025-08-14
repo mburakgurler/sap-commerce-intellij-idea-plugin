@@ -20,13 +20,14 @@ package com.intellij.idea.plugin.hybris.tools.ccv2.actions
 
 import com.intellij.idea.plugin.hybris.common.utils.HybrisIcons
 import com.intellij.idea.plugin.hybris.notifications.Notifications
-import com.intellij.idea.plugin.hybris.settings.CCv2Settings
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
-import com.intellij.idea.plugin.hybris.settings.components.ApplicationSettingsComponent
+import com.intellij.idea.plugin.hybris.settings.ApplicationSettings
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
 import com.intellij.idea.plugin.hybris.tools.ccv2.CCv2Service
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2EnvironmentDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2EnvironmentStatus
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2ServiceDto
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2SettingsState
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.idea.plugin.hybris.toolwindow.HybrisToolWindowFactory
 import com.intellij.idea.plugin.hybris.toolwindow.ccv2.CCv2Tab
 import com.intellij.idea.plugin.hybris.toolwindow.ccv2.views.CCv2EnvironmentDetailsView
@@ -91,7 +92,7 @@ class CCv2FetchEnvironmentAction(
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = !fetching && ApplicationSettingsComponent.getInstance().state.ccv2Subscriptions.isNotEmpty()
+        e.presentation.isEnabled = !fetching && ApplicationSettings.getInstance().state.ccv2Subscriptions.isNotEmpty()
         e.presentation.text = if (fetching) "Fetching..." else "Fetch Environment"
         e.presentation.disabledIcon = if (fetching) AnimatedIcon.Default.INSTANCE else HybrisIcons.CCv2.Actions.FETCH
     }
@@ -140,7 +141,7 @@ class CCv2FetchEnvironmentServiceAction(
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = !fetching && ApplicationSettingsComponent.getInstance().state.ccv2Subscriptions.isNotEmpty()
+        e.presentation.isEnabled = !fetching && ApplicationSettings.getInstance().state.ccv2Subscriptions.isNotEmpty()
         e.presentation.text = if (fetching) "Fetching..." else "Fetch Service"
         e.presentation.disabledIcon = if (fetching) AnimatedIcon.Default.INSTANCE else HybrisIcons.CCv2.Actions.FETCH
     }
@@ -186,7 +187,17 @@ abstract class CCv2ShowEnvironmentWithStatusAction(status: CCv2EnvironmentStatus
     status.icon
 ) {
 
-    override fun getStatuses(settings: CCv2Settings) = settings.showEnvironmentStatuses
+    override fun setSelected(e: AnActionEvent, state: Boolean) {
+        val project = e.project ?: return
+        val developerSettings = DeveloperSettings.getInstance(project)
+        val mutableSettings = developerSettings.ccv2Settings.mutable()
+        if (state) mutableSettings.showEnvironmentStatuses.add(status)
+        else mutableSettings.showEnvironmentStatuses.remove(status)
+
+        developerSettings.ccv2Settings = mutableSettings.immutable()
+    }
+
+    override fun getStatuses(settings: CCv2SettingsState) = settings.showEnvironmentStatuses
 }
 
 class CCv2ShowProvisioningEnvironmentsAction : CCv2ShowEnvironmentWithStatusAction(CCv2EnvironmentStatus.PROVISIONING)

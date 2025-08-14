@@ -1,6 +1,6 @@
 /*
  * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
- * Copyright (C) 2019-2024 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -18,8 +18,7 @@
 package com.intellij.idea.plugin.hybris.system.cockpitng.lang.folding
 
 import com.intellij.idea.plugin.hybris.lang.folding.AbstractXmlFoldingBuilderEx
-import com.intellij.idea.plugin.hybris.settings.CngFoldingSettings
-import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.advancedSearch.Field
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.advancedSearch.FieldList
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.collectionBrowser.Mold
@@ -35,6 +34,7 @@ import com.intellij.idea.plugin.hybris.system.cockpitng.model.wizardConfig.Addit
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.wizardConfig.ComposedHandler
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.wizardConfig.Property
 import com.intellij.idea.plugin.hybris.system.cockpitng.model.wizardConfig.PropertyList
+import com.intellij.idea.plugin.hybris.system.cockpitng.settings.state.CngFoldingSettingsState
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -42,7 +42,7 @@ import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.xml.XmlTag
 import java.util.*
 
-class CngConfigFoldingBuilder : AbstractXmlFoldingBuilderEx<CngFoldingSettings, Config>(Config::class.java), DumbAware {
+class CngConfigFoldingBuilder : AbstractXmlFoldingBuilderEx<CngFoldingSettingsState, Config>(Config::class.java), DumbAware {
 
     override val filter = PsiElementFilter {
         when (it) {
@@ -66,7 +66,7 @@ class CngConfigFoldingBuilder : AbstractXmlFoldingBuilderEx<CngFoldingSettings, 
         }
     }
 
-    override fun initSettings(project: Project) = DeveloperSettingsComponent.getInstance(project).state
+    override fun initSettings(project: Project) = DeveloperSettings.getInstance(project)
         .cngSettings
         .folding
 

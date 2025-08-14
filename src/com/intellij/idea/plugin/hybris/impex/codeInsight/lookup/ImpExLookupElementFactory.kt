@@ -1,6 +1,6 @@
 /*
  * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
- * Copyright (C) 2019-2024 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -25,7 +25,7 @@ import com.intellij.idea.plugin.hybris.impex.constants.modifier.AttributeModifie
 import com.intellij.idea.plugin.hybris.impex.constants.modifier.TypeModifier
 import com.intellij.idea.plugin.hybris.impex.psi.ImpexAttribute
 import com.intellij.idea.plugin.hybris.impex.psi.ImpexTypes
-import com.intellij.idea.plugin.hybris.settings.ImpexCompletionSettings
+import com.intellij.idea.plugin.hybris.impex.settings.state.ImpExCompletionSettingsState
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.childrenOfType
@@ -33,9 +33,9 @@ import com.intellij.psi.util.parentOfType
 
 object ImpExLookupElementFactory {
 
-    fun build(element: PsiElement, modifier: TypeModifier, completionSettings: ImpexCompletionSettings) = build(element, modifier.modifierName, completionSettings)
+    fun build(element: PsiElement, modifier: TypeModifier, completionSettings: ImpExCompletionSettingsState) = build(element, modifier.modifierName, completionSettings)
 
-    fun build(element: PsiElement, modifier: AttributeModifier, completionSettings: ImpexCompletionSettings) = build(element, modifier.modifierName, completionSettings)
+    fun build(element: PsiElement, modifier: AttributeModifier, completionSettings: ImpExCompletionSettingsState) = build(element, modifier.modifierName, completionSettings)
 
     fun buildModifierValue(lookupElement: String) = LookupElementBuilder.create(lookupElement)
 
@@ -67,7 +67,7 @@ object ImpExLookupElementFactory {
         .withIcon(HybrisIcons.ImpEx.MODE)
         .withInsertHandler(AutoPopupInsertHandler.INSTANCE)
 
-    private fun build(element: PsiElement, modifierName: String, completionSettings: ImpexCompletionSettings) =
+    private fun build(element: PsiElement, modifierName: String, completionSettings: ImpExCompletionSettingsState) =
         if (completionSettings.addEqualsAfterModifier && !hasAssignValueLeaf(element))
             LookupElementBuilder.create("$modifierName=")
                 .withPresentableText(modifierName)

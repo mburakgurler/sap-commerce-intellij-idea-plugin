@@ -21,13 +21,13 @@ package com.intellij.idea.plugin.hybris.tools.ccv2
 import com.intellij.ide.BrowserUtil
 import com.intellij.idea.plugin.hybris.common.HybrisConstants
 import com.intellij.idea.plugin.hybris.notifications.Notifications
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
-import com.intellij.idea.plugin.hybris.settings.components.ApplicationSettingsComponent
-import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
-import com.intellij.idea.plugin.hybris.settings.options.ApplicationCCv2SettingsConfigurableProvider
+import com.intellij.idea.plugin.hybris.settings.ApplicationSettings
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
 import com.intellij.idea.plugin.hybris.tools.ccv2.api.CCv1Api
 import com.intellij.idea.plugin.hybris.tools.ccv2.api.CCv2Api
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.*
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.options.ApplicationCCv2SettingsConfigurableProvider
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeLater
@@ -95,7 +95,7 @@ class CCv2Service(val project: Project, private val coroutineScope: CoroutineSco
     ) {
         if (sendEvents) project.messageBus.syncPublisher(CCv2EnvironmentsListener.TOPIC).onFetchingStarted(subscriptions)
 
-        val ccv2Settings = DeveloperSettingsComponent.getInstance(project).state.ccv2Settings
+        val ccv2Settings = DeveloperSettings.getInstance(project).ccv2Settings
         val statuses = (statuses ?: ccv2Settings.showEnvironmentStatuses)
             .map { it.name }
 
@@ -277,7 +277,7 @@ class CCv2Service(val project: Project, private val coroutineScope: CoroutineSco
     ) {
         project.messageBus.syncPublisher(CCv2BuildsListener.TOPIC).onFetchingStarted(subscriptions)
 
-        val ccv2Settings = DeveloperSettingsComponent.getInstance(project).state.ccv2Settings
+        val ccv2Settings = DeveloperSettings.getInstance(project).ccv2Settings
         val statusNot = CCv2BuildStatus.entries
             .filterNot { ccv2Settings.showBuildStatuses.contains(it) }
             .map { it.name }
@@ -754,7 +754,7 @@ class CCv2Service(val project: Project, private val coroutineScope: CoroutineSco
     }
 
     private fun getCCv2Token(subscription: CCv2Subscription): String? {
-        val appSettings = ApplicationSettingsComponent.getInstance()
+        val appSettings = ApplicationSettings.getInstance()
         val ccv2Token = appSettings.getCCv2Token(subscription.uuid)
             ?: appSettings.getCCv2Token()
 

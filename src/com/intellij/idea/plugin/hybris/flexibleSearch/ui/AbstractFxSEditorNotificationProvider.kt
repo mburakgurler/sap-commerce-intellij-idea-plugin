@@ -1,6 +1,6 @@
 /*
  * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
- * Copyright (C) 2019-2024 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -18,9 +18,9 @@
 package com.intellij.idea.plugin.hybris.flexibleSearch.ui
 
 import com.intellij.idea.plugin.hybris.flexibleSearch.file.FlexibleSearchFileType
-import com.intellij.idea.plugin.hybris.settings.FlexibleSearchSettings
-import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
-import com.intellij.idea.plugin.hybris.settings.components.ProjectSettingsComponent
+import com.intellij.idea.plugin.hybris.flexibleSearch.settings.state.FlexibleSearchSettingsState
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
+import com.intellij.idea.plugin.hybris.settings.ProjectSettings
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbAware
@@ -37,11 +37,11 @@ import javax.swing.JComponent
 abstract class AbstractFxSEditorNotificationProvider : EditorNotificationProvider, DumbAware {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        val projectSettings = ProjectSettingsComponent.getInstance(project)
+        val projectSettings = ProjectSettings.getInstance(project)
         if (!projectSettings.isHybrisProject()) return null
         if (!FileTypeRegistry.getInstance().isFileOfType(file, FlexibleSearchFileType)) return null
 
-        val developerSettings = DeveloperSettingsComponent.getInstance(project).state
+        val developerSettings = DeveloperSettings.getInstance(project)
         val fxsSettings = developerSettings.flexibleSearchSettings
         if (!shouldCollect(fxsSettings)) return null
 
@@ -52,15 +52,15 @@ abstract class AbstractFxSEditorNotificationProvider : EditorNotificationProvide
         return panelFunction(fxsSettings, project, psiFile, file)
     }
 
-    protected abstract fun shouldCollect(fxsSettings: FlexibleSearchSettings): Boolean
+    protected abstract fun shouldCollect(fxsSettings: FlexibleSearchSettingsState): Boolean
 
     protected abstract fun panelFunction(
-        fxsSettings: FlexibleSearchSettings,
+        fxsSettings: FlexibleSearchSettingsState,
         project: Project,
         psiFile: PsiFile,
         file: VirtualFile
     ): Function<FileEditor, EditorNotificationPanel>
 
-    protected abstract fun collect(fxsSettings: FlexibleSearchSettings, psiFile: PsiFile): Collection<LeafPsiElement>
+    protected abstract fun collect(fxsSettings: FlexibleSearchSettingsState, psiFile: PsiFile): Collection<LeafPsiElement>
 
 }

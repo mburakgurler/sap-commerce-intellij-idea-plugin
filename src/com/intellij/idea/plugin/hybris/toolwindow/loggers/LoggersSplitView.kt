@@ -18,24 +18,24 @@
 
 package com.intellij.idea.plugin.hybris.toolwindow.loggers
 
-import com.intellij.idea.plugin.hybris.settings.RemoteConnectionListener
-import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
 import com.intellij.idea.plugin.hybris.tools.logging.CxLoggerAccess
 import com.intellij.idea.plugin.hybris.tools.logging.CxLoggersStateListener
 import com.intellij.idea.plugin.hybris.tools.remote.RemoteConnectionService
 import com.intellij.idea.plugin.hybris.tools.remote.RemoteConnectionType
+import com.intellij.idea.plugin.hybris.tools.remote.settings.RemoteConnectionListener
+import com.intellij.idea.plugin.hybris.tools.remote.settings.state.RemoteConnectionSettingsState
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.LoggersOptionsTree
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.LoggersOptionsTreeNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersHacConnectionNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.LoggersNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.options.templates.BundledLoggersTemplateLoggersOptionsNode
 import com.intellij.idea.plugin.hybris.toolwindow.loggers.tree.nodes.options.templates.CustomLoggersTemplateLoggersOptionsNode
-import com.intellij.idea.plugin.hybris.ui.UiUtil.addMouseListener
-import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeModelListener
-import com.intellij.idea.plugin.hybris.ui.UiUtil.addTreeSelectionListener
-import com.intellij.idea.plugin.hybris.ui.UiUtil.pathData
+import com.intellij.idea.plugin.hybris.ui.addMouseListener
+import com.intellij.idea.plugin.hybris.ui.addTreeModelListener
+import com.intellij.idea.plugin.hybris.ui.addTreeSelectionListener
 import com.intellij.idea.plugin.hybris.ui.event.MouseListener
 import com.intellij.idea.plugin.hybris.ui.event.TreeModelListener
+import com.intellij.idea.plugin.hybris.ui.pathData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -69,15 +69,15 @@ class LoggersSplitView(
 
         with(project.messageBus.connect(this)) {
             subscribe(RemoteConnectionListener.TOPIC, object : RemoteConnectionListener {
-                override fun onActiveHybrisConnectionChanged(remoteConnection: RemoteConnectionSettings) {
+                override fun onActiveHybrisConnectionChanged(remoteConnection: RemoteConnectionSettingsState) {
                     updateTree(remoteConnection)
                 }
 
-                override fun onHybrisConnectionModified(remoteConnection: RemoteConnectionSettings) = tree.update()
+                override fun onHybrisConnectionModified(remoteConnection: RemoteConnectionSettingsState) = tree.update()
             })
 
             subscribe(CxLoggersStateListener.TOPIC, object : CxLoggersStateListener {
-                override fun onLoggersStateChanged(remoteConnection: RemoteConnectionSettings) {
+                override fun onLoggersStateChanged(remoteConnection: RemoteConnectionSettingsState) {
                     tree.lastSelectedPathComponent
                         ?.asSafely<LoggersOptionsTreeNode>()
                         ?.userObject
@@ -89,7 +89,7 @@ class LoggersSplitView(
         }
     }
 
-    private fun updateTree(settings: RemoteConnectionSettings) {
+    private fun updateTree(settings: RemoteConnectionSettingsState) {
         val connections = RemoteConnectionService.getInstance(project)
             .getRemoteConnections(RemoteConnectionType.Hybris)
             .associateWith { (it == settings) }

@@ -18,12 +18,12 @@
 
 package com.intellij.idea.plugin.hybris.tools.logging
 
-import com.intellij.idea.plugin.hybris.settings.RemoteConnectionSettings
+import com.intellij.idea.plugin.hybris.tools.remote.settings.state.RemoteConnectionSettingsState
 import com.intellij.util.messages.Topic
 
 interface CxLoggersStateListener {
 
-    fun onLoggersStateChanged(remoteConnection: RemoteConnectionSettings) = Unit
+    fun onLoggersStateChanged(remoteConnection: RemoteConnectionSettingsState) = Unit
 
     companion object {
         val TOPIC = Topic(CxLoggersStateListener::class.java)

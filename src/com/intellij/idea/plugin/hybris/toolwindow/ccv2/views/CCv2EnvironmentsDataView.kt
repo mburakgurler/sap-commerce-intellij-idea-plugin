@@ -20,14 +20,14 @@ package com.intellij.idea.plugin.hybris.toolwindow.ccv2.views
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.idea.plugin.hybris.common.utils.HybrisIcons
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.actions.CCv2ShowEnvironmentDetailsAction
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2DeploymentStatusEnum
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2EnvironmentDto
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.ui.dynatrace
 import com.intellij.idea.plugin.hybris.toolwindow.ccv2.CCv2Tab
 import com.intellij.idea.plugin.hybris.toolwindow.ccv2.CCv2ViewUtil
-import com.intellij.idea.plugin.hybris.ui.UiUtil
+import com.intellij.idea.plugin.hybris.ui.scrollPanel
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -59,7 +59,7 @@ object CCv2EnvironmentsDataView : AbstractCCv2DataView<CCv2EnvironmentDto>() {
                 .expanded = showBuilds
         }
     }
-        .let { UiUtil.scrollPanel(it) }
+        .let { scrollPanel(it) }
 
     private fun Panel.environment(project: Project, subscription: CCv2Subscription, environment: CCv2EnvironmentDto, showBuilds: Boolean = false) {
         row {

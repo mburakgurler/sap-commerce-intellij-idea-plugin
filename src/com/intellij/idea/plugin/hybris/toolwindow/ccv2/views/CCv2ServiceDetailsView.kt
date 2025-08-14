@@ -18,16 +18,16 @@
 
 package com.intellij.idea.plugin.hybris.toolwindow.ccv2.views
 
-import com.intellij.idea.plugin.hybris.settings.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.CCv2Service
 import com.intellij.idea.plugin.hybris.tools.ccv2.actions.CCv2FetchEnvironmentServiceAction
 import com.intellij.idea.plugin.hybris.tools.ccv2.actions.CCv2ServiceRestartReplicaAction
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2EnvironmentDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2ServiceDto
 import com.intellij.idea.plugin.hybris.tools.ccv2.dto.CCv2ServiceProperties
+import com.intellij.idea.plugin.hybris.tools.ccv2.settings.state.CCv2Subscription
 import com.intellij.idea.plugin.hybris.tools.ccv2.ui.*
 import com.intellij.idea.plugin.hybris.toolwindow.ccv2.CCv2ViewUtil
-import com.intellij.idea.plugin.hybris.ui.UiUtil
+import com.intellij.idea.plugin.hybris.ui.scrollPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -339,7 +339,7 @@ class CCv2ServiceDetailsView(
             }
         }
     }
-        .let { UiUtil.scrollPanel(it) }
+        .let { scrollPanel(it) }
 
     companion object {
         @Serial

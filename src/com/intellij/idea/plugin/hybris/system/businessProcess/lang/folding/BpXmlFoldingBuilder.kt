@@ -1,6 +1,6 @@
 /*
- * This file is part of "SAP Commerce Developers Toolset" plugin for Intellij IDEA.
- * Copyright (C) 2019-2023 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as
@@ -19,9 +19,9 @@
 package com.intellij.idea.plugin.hybris.system.businessProcess.lang.folding
 
 import com.intellij.idea.plugin.hybris.lang.folding.AbstractXmlFoldingBuilderEx
-import com.intellij.idea.plugin.hybris.settings.BpFoldingSettings
-import com.intellij.idea.plugin.hybris.settings.components.DeveloperSettingsComponent
+import com.intellij.idea.plugin.hybris.settings.DeveloperSettings
 import com.intellij.idea.plugin.hybris.system.businessProcess.model.*
+import com.intellij.idea.plugin.hybris.system.businessProcess.settings.state.BpFoldingSettingsState
 import com.intellij.idea.plugin.hybris.system.businessProcess.util.BpHelper
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.DumbAware
@@ -29,7 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiElementFilter
 import com.intellij.psi.xml.XmlTag
 
-class BpXmlFoldingBuilder : AbstractXmlFoldingBuilderEx<BpFoldingSettings, Process>(Process::class.java), DumbAware {
+class BpXmlFoldingBuilder : AbstractXmlFoldingBuilderEx<BpFoldingSettingsState, Process>(Process::class.java), DumbAware {
 
     override val filter = PsiElementFilter {
         when (it) {
@@ -50,7 +50,7 @@ class BpXmlFoldingBuilder : AbstractXmlFoldingBuilderEx<BpFoldingSettings, Proce
         }
     }
 
-    override fun initSettings(project: Project) = DeveloperSettingsComponent.getInstance(project).state
+    override fun initSettings(project: Project) = DeveloperSettings.getInstance(project)
         .bpSettings
         .folding
 
