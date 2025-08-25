@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
-  ~ Copyright (C) 2014-2016 Alexander Bartash <AlexanderBartash@gmail.com>
   ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
   ~
   ~ This program is free software: you can redistribute it and/or modify
@@ -29,11 +28,11 @@
 
     <resource-bundle>i18n.HybrisBundle</resource-bundle>
 
-    <incompatible-with>ccom.intellij.idea.plugin.hybris.impex</incompatible-with>
+    <incompatible-with>csap.commerce.toolset.impex</incompatible-with>
     <incompatible-with>ccom.intellij.idea.plugin.commerce.integration</incompatible-with>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
-        <supportsKotlinPluginMode supportsK2="true" />
+        <supportsKotlinPluginMode supportsK2="true"/>
     </extensions>
 
     <depends>com.intellij.modules.platform</depends>
@@ -42,46 +41,103 @@
     <depends>com.intellij.modules.xdebugger</depends>
     <depends>com.intellij.modules.json</depends>
 
-    <depends config-file="dependencies/com.intellij.idea.plugin.sap.commerce-java.xml">com.intellij.modules.java</depends>
+    <xi:include href="/META-INF/sap.commerce.toolset-shared-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-shared-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-junit.xml">JUnit</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-ant.xml">AntSupport</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-maven.xml">org.jetbrains.idea.maven</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-eclipse.xml">org.jetbrains.idea.eclipse</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-angular.xml">AngularJS</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-gradle.xml">com.intellij.gradle</depends>
+    <xi:include href="/META-INF/sap.commerce.toolset-exec-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-console-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-console-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-hac-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-hac-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-typeSystem-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-typeSystem-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-beanSystem-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-beanSystem-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-project-compile.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-extensioninfo.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-localextensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-searcheverywhere.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-import-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-import-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-project-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-debugger-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-impex-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-impex-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-impex-monitoring.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-impex-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-acl-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-acl-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-flexibleSearch-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-flexibleSearch-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-flexibleSearch-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-polyglotQuery-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-polyglotQuery-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-polyglotQuery-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-businessProcess-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-businessProcess-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-cockpitNG-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-cockpitNG-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-groovy-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-groovy-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-groovy-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-ccv2-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-ccv2-manifest.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-ccv2-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-ccv2-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-spring-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-logging-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-occ-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-solr-exec.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-solr-ui.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <xi:include href="/META-INF/sap.commerce.toolset-java-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/sap.commerce.toolset-java-jsp.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <depends optional="true" config-file="sap.commerce.toolset-businessProcess-diagram.xml">com.intellij.diagram</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-typeSystem-diagram.xml">com.intellij.diagram</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-project-diagram.xml">com.intellij.diagram</depends>
+
+    <depends optional="true" config-file="sap.commerce.toolset-jrebel-core.xml">JRebelPlugin</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-copyright-core.xml">com.intellij.copyright</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-terminal-core.xml">org.jetbrains.plugins.terminal</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-ant-core.xml">AntSupport</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-ant-ui.xml">AntSupport</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-kotlin-core.xml">org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-gradle-core.xml">com.intellij.gradle</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-maven-core.xml">org.jetbrains.idea.maven</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-eclipse-core.xml">org.jetbrains.idea.eclipse</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-angular-core.xml">AngularJS</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-junit-core.xml">JUnit</depends>
+
+    <depends optional="true" config-file="sap.commerce.toolset-javaee-core.xml">com.intellij.javaee</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-javaee-web.xml">com.intellij.javaee.web</depends>
+    <depends optional="true" config-file="sap.commerce.toolset-javaee-el.xml">com.intellij.spring</depends>
+
+    <depends optional="true" config-file="sap.commerce.toolset-database-core.xml">com.intellij.database</depends>
+
     <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-spring.xml">com.intellij.spring</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-javaee.xml">com.intellij.javaee</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-javaee-web.xml">com.intellij.javaee.web</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-diagram.xml">com.intellij.diagram</depends>
     <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-groovy.xml">org.intellij.groovy</depends>
     <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-javascript.xml">JavaScript</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-copyright.xml">com.intellij.copyright</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-kotlin.xml">org.jetbrains.kotlin</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-database.xml">com.intellij.database</depends>
     <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-intelliLang.xml">org.intellij.intelliLang</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-jrebel.xml">JRebelPlugin</depends>
     <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-cron.xml">com.intellij.cron</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-terminal.xml">org.jetbrains.plugins.terminal</depends>
-    <depends optional="true" config-file="dependencies/com.intellij.idea.plugin.sap.commerce-grid.xml">intellij.grid.plugin</depends>
-
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-xdebugger.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-lang.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-beanSystem.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-businessProcess.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-ccv2.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-cockpitng.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-extensioninfo.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-flexibleSearch.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-impex.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-acl.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-localextensions.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-polyglot-query.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-typeSystem.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-logging.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-console.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/dependencies/com.intellij.idea.plugin.sap.commerce-jsp.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <xi:include href="/META-INF/plugin-internal.xml" xpointer="xpointer(/idea-plugin/*)"/>
-    <xi:include href="/META-INF/plugin-inspections.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

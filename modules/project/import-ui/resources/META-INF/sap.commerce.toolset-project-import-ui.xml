@@ -1,0 +1,38 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectImportProvider implementation="sap.commerce.toolset.project.HybrisProjectImportProvider"/>
+        <projectImportBuilder implementation="sap.commerce.toolset.project.DefaultHybrisProjectImportBuilder"/>
+        <projectImportBuilder implementation="sap.commerce.toolset.project.OpenHybrisProjectImportBuilder"/>
+        <projectOpenProcessor implementation="sap.commerce.toolset.project.HybrisProjectOpenProcessor"/>
+
+        <applicationService serviceInterface="sap.commerce.toolset.project.services.HybrisProjectService"
+                            serviceImplementation="sap.commerce.toolset.project.services.impl.DefaultHybrisProjectService"/>
+    </extensions>
+
+    <actions>
+        <action id="sap.commerce.toolset.yRefresh" class="sap.commerce.toolset.project.actionSystem.ProjectRefreshAction"
+                text="Refresh SAP Commerce Project"
+                description="Re-imports the current hybris project with default values">
+            <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
+        </action>
+    </actions>
+
+</idea-plugin>

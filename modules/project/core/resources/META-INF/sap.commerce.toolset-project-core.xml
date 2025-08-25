@@ -1,0 +1,81 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+<idea-plugin>
+
+    <extensionPoints>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.preImportConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ProjectPreImportConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.importConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ProjectImportConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.postImportConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ProjectPostImportConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.startupConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ProjectStartupConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.refreshConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ProjectRefreshConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.module.importConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ModuleImportConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.module.facetConfigurator"
+                        interface="sap.commerce.toolset.project.configurator.ModuleFacetConfigurator"
+                        dynamic="false"/>
+        <extensionPoint qualifiedName="sap.commerce.toolset.project.module.descriptorProvider"
+                        interface="sap.commerce.toolset.project.descriptor.ModuleDescriptorProvider"
+                        dynamic="false"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <facetType implementation="sap.commerce.toolset.project.facet.YFacetType"/>
+
+        <iconProvider order="first" implementation="sap.commerce.toolset.project.HybrisProjectIconProvider"/>
+
+        <completion.contributor language="XML" implementationClass="sap.commerce.toolset.project.codeInsight.completion.EiCompletionContributor"/>
+        <completion.contributor language="XML" implementationClass="sap.commerce.toolset.project.codeInsight.completion.LeCompletionContributor"/>
+
+        <codeInsight.lineMarkerProvider language="XML" implementationClass="sap.commerce.toolset.project.codeInsight.daemon.EiExtensionLineMarkerProvider"/>
+        <codeInsight.lineMarkerProvider language="XML" implementationClass="sap.commerce.toolset.project.codeInsight.daemon.LeExtensionLineMarkerProvider"/>
+
+        <indexedRootsProvider implementation="sap.commerce.toolset.project.indexing.HybrisProjectRootIndexedRootsProvider"/>
+        <directoryIndexExcludePolicy implementation="sap.commerce.toolset.project.indexing.HybrisDirectoryIndexExcludePolicy"/>
+        <gotoClassContributor implementation="sap.commerce.toolset.project.gotoClass.CustomGotoClassContributor"/>
+
+        <writingAccessProvider implementation="sap.commerce.toolset.project.vfs.HybrisWritingAccessProvider" />
+        <nonProjectFileWritingAccessExtension implementation="sap.commerce.toolset.project.vfs.HybrisNonProjectFileWritingAccessExtension"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Extension Info"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.ei.EiUnknownExtensionDeclaration.key"
+                         shortName="EiUnknownExtensionDefinition" level="ERROR"
+                         implementationClass="sap.commerce.toolset.project.codeInspection.EiUnknownExtensionDefinition"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Extension Info"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.ei.EiDuplicateExtensionDeclaration.key"
+                         shortName="EiDuplicateExtensionDefinition" level="ERROR"
+                         implementationClass="sap.commerce.toolset.project.codeInspection.EiDuplicateExtensionDefinition"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Local Extensions"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.le.LeUnknownExtensionDeclaration.key"
+                         shortName="LeUnknownExtensionDefinition" level="ERROR"
+                         implementationClass="sap.commerce.toolset.project.codeInspection.LeUnknownExtensionDefinition"/>
+    </extensions>
+
+</idea-plugin>

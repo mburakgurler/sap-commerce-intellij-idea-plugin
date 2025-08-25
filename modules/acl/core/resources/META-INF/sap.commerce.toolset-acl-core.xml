@@ -1,0 +1,44 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <internalFileTemplate name="Acl File"/>
+
+        <fileType name="Access Control Lists" language="ACL" extensions="acl" fieldName="INSTANCE"
+                  implementationClass="sap.commerce.toolset.acl.file.AclFileType"/>
+
+        <colorSettingsPage implementation="sap.commerce.toolset.acl.highlighting.AclColorSettingsPage"/>
+        <additionalTextAttributes scheme="Default" file="colorSchemes/AclDefault.xml"/>
+        <additionalTextAttributes scheme="Darcula" file="colorSchemes/AclDarcula.xml"/>
+
+        <lang.parserDefinition language="ACL" implementationClass="sap.commerce.toolset.acl.AclParserDefinition"/>
+        <lang.syntaxHighlighterFactory language="ACL" implementationClass="sap.commerce.toolset.acl.highlighting.AclSyntaxHighlighterFactory"/>
+        <lang.commenter language="ACL" implementationClass="sap.commerce.toolset.acl.lang.AclCommenter"/>
+        <lang.formatter language="ACL" implementationClass="sap.commerce.toolset.acl.formatting.AclFormattingModelBuilder"/>
+        <lang.foldingBuilder language="ACL" implementationClass="sap.commerce.toolset.acl.lang.folding.AclFoldingBuilder"/>
+
+        <annotator language="ACL" implementationClass="sap.commerce.toolset.acl.lang.annotation.AclAnnotator"/>
+
+        <editorFactoryListener implementation="sap.commerce.toolset.acl.editor.event.AclLineEditorFactoryListener"/>
+
+        <completion.contributor language="ACL" implementationClass="sap.commerce.toolset.acl.codeInsight.completion.AclCompletionContributor"/>
+
+        <vfs.asyncListener implementation="sap.commerce.toolset.acl.vfs.event.AclVfsAsyncListener"/>
+    </extensions>
+</idea-plugin>

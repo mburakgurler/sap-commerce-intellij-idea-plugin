@@ -1,0 +1,64 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <dom.extender domClass="sap.commerce.toolset.cockpitNG.model.config.Context"
+                      extenderClass="sap.commerce.toolset.cockpitNG.CngConfigDomExtender"/>
+        <dom.fileMetaData rootTagName="config" stubVersion="4"
+                          implementation="sap.commerce.toolset.cockpitNG.CngConfigDomFileDescription"/>
+        <dom.fileMetaData rootTagName="widgets" stubVersion="5"
+                          implementation="sap.commerce.toolset.cockpitNG.CngWidgetsDomFileDescription"/>
+        <dom.fileMetaData rootTagName="action-definition" stubVersion="4"
+                          implementation="sap.commerce.toolset.cockpitNG.CngActionDefinitionDomFileDescription"/>
+        <dom.fileMetaData rootTagName="widget-definition" stubVersion="5"
+                          implementation="sap.commerce.toolset.cockpitNG.CngWidgetDefinitionDomFileDescription"/>
+        <dom.fileMetaData rootTagName="editor-definition" stubVersion="4"
+                          implementation="sap.commerce.toolset.cockpitNG.CngEditorDefinitionDomFileDescription"/>
+
+        <lang.foldingBuilder language="XML" implementationClass="sap.commerce.toolset.cockpitNG.lang.folding.CngConfigFoldingBuilder"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.DomElementsInspection.key"
+                         shortName="CngConfigDomElementsInspection" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngConfigDomInspection"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.DomElementsInspection.key"
+                         shortName="CngActionsDomElementsInspection" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngActionsDomInspection"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.DomElementsInspection.key"
+                         shortName="CngWidgetsDomElementsInspection" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngWidgetsDomInspection"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.cng.ContextMergeByPointToExistingContextAttribute.key"
+                         shortName="CngContextMergeByPointToExistingContextAttribute" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngContextMergeByPointToExistingContextAttribute"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.cng.ContextParentIsNotValid.key"
+                         shortName="CngContextParentIsNotValid" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngContextParentIsNotValid"/>
+        <localInspection language="XML" enabledByDefault="true" groupPath="SAP Commerce" groupName="[y] Cockpit NG"
+                         bundle="i18n.HybrisBundle" key="hybris.inspections.cng.CngContextMergeByTypeParentIsNotValid.key"
+                         shortName="CngContextMergeByTypeParentIsNotValid" level="ERROR"
+                         implementationClass="sap.commerce.toolset.cockpitNG.codeInspection.CngContextMergeByTypeParentIsNotValid"/>
+    </extensions>
+
+</idea-plugin>

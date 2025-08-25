@@ -1,6 +1,5 @@
 <!--
   ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
-  ~ Copyright (C) 2014-2016 Alexander Bartash <AlexanderBartash@gmail.com>
   ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
   ~
   ~ This program is free software: you can redistribute it and/or modify
@@ -18,69 +17,64 @@
   -->
 
 <idea-plugin>
+
+    <extensions defaultExtensionNs="sap.commerce.toolset">
+        <project.preImportConfigurator implementation="sap.commerce.toolset.project.configurator.UltimateFeaturesConfigurator"/>
+    </extensions>
+
     <extensions defaultExtensionNs="com.intellij">
-
         <notificationGroup id="[y] SAP Commerce" displayType="BALLOON" isLogByDefault="true"/>
-
-        <indexedRootsProvider implementation="com.intellij.idea.plugin.hybris.indexing.HybrisProjectRootIndexedRootsProvider"/>
-
-        <treeStructureProvider id="hybris.project.root.tree.structure.provider" order="first"
-                               implementation="com.intellij.idea.plugin.hybris.project.view.HybrisProjectView"/>
-
-        <projectViewNodeDecorator order="last" implementation="com.intellij.idea.plugin.hybris.project.view.HybrisProjectViewNodeDecorator"/>
-
-        <psi.referenceContributor language="XML" implementation="com.intellij.idea.plugin.hybris.system.cockpitng.psi.contributor.CngReferenceContributor"/>
-        <psi.referenceContributor language="XML" implementation="com.intellij.idea.plugin.hybris.system.bean.psi.contributor.BSReferenceContributor"/>
-        <psi.referenceContributor language="XML" implementation="com.intellij.idea.plugin.hybris.system.type.psi.contributor.TSReferenceContributor"/>
-
-        <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
-                        serviceImplementation="com.intellij.idea.plugin.hybris.project.view.impl.HybrisProjectViewDirectoryHelper"
-                        order="last"
-                        overrides="true"/>
-
-        <gotoClassContributor implementation="com.intellij.idea.plugin.hybris.gotoClass.CustomGotoClassContributor"/>
-        <directoryIndexExcludePolicy implementation="com.intellij.idea.plugin.hybris.project.indexing.HybrisDirectoryIndexExcludePolicy"/>
-
-        <applicationConfigurable id="hybris.settings" parentId="root" displayName="[y] SAP CX"
-                                 provider="com.intellij.idea.plugin.hybris.settings.options.ApplicationSettingsConfigurableProvider"/>
-        <applicationConfigurable id="hybris.settings.ccv2" parentId="hybris.settings" displayName="CCv2"
-                                 provider="com.intellij.idea.plugin.hybris.tools.ccv2.settings.options.ApplicationCCv2SettingsConfigurableProvider"/>
-        <applicationConfigurable id="hybris.project.import.settings" parentId="hybris.settings"
-                                 key="hybris.settings.application.project_import.title"
-                                 provider="com.intellij.idea.plugin.hybris.settings.options.ApplicationProjectImportSettingsConfigurableProvider"/>
-
-        <projectConfigurable id="hybris.project.settings" parentId="hybris.settings" nonDefaultProject="true"
-                             dynamic="true"
-                             key="hybris.settings.project.title"
-                             provider="com.intellij.idea.plugin.hybris.settings.options.ProjectSettingsConfigurableProvider"/>
-        <projectConfigurable id="hybris.project.integrations.settings" parentId="hybris.project.settings"
-                             nonDefaultProject="true" dynamic="true"
-                             displayName="Integrations" order="first"
-                             provider="com.intellij.idea.plugin.hybris.settings.options.ProjectIntegrationsSettingsConfigurableProvider"/>
-
-        <toolWindow id="SAP CX" icon="/icons/toolWindow.svg" anchor="bottom" doNotActivateOnStart="true" canCloseContents="true"
-                    factoryClass="com.intellij.idea.plugin.hybris.toolwindow.HybrisToolWindowFactory"/>
-
-        <iconProvider order="first" implementation="com.intellij.idea.plugin.hybris.project.HybrisProjectIconProvider"/>
-
-        <configurationType implementation="com.intellij.idea.plugin.hybris.runConfigurations.LocalSapCXConfigurationType"/>
 
         <errorHandler implementation="com.intellij.diagnostic.JetBrainsMarketplaceErrorReportSubmitter"/>
 
-        <webHelpProvider implementation="com.intellij.idea.plugin.hybris.help.HybrisWebHelpProvider"/>
+        <toolWindow id="SAP CX" icon="/icons/toolWindow.svg" anchor="bottom" doNotActivateOnStart="true" canCloseContents="true"
+                    factoryClass="sap.commerce.toolset.toolwindow.HybrisToolWindowFactory"/>
 
-        <fileEditorProvider implementation="com.intellij.idea.plugin.hybris.editor.HybrisSplitFileEditorProvider"/>
+        <projectConfigurable id="hybris.project.integrations.settings" parentId="hybris.project.settings"
+                             nonDefaultProject="true" dynamic="true"
+                             displayName="Integrations" order="first"
+                             provider="sap.commerce.toolset.options.ProjectIntegrationsSettingsConfigurableProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <treeStructureProvider id="hybris.project.root.tree.structure.provider" order="first"
+                               implementation="sap.commerce.toolset.project.view.HybrisProjectView"/>
+        <projectViewNodeDecorator order="last" implementation="sap.commerce.toolset.project.view.HybrisProjectViewNodeDecorator"/>
+        <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
+                        serviceImplementation="sap.commerce.toolset.project.view.impl.HybrisProjectViewDirectoryHelper"
+                        order="last"
+                        overrides="true"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <vfs.asyncListener implementation="sap.commerce.toolset.meta.event.MetaSystemFileListener"/>
+        <psi.treeChangeListener implementation="sap.commerce.toolset.meta.event.MetaSystemPsiTreeChangeListener"/>
+        <editorFactoryListener implementation="sap.commerce.toolset.editor.event.HybrisEditorFactoryListener"/>
+        <fileEditorProvider implementation="sap.commerce.toolset.editor.HybrisSplitFileEditorProvider"/>
+    </extensions>
+
+    <!-- Language injections -->
+    <extensions defaultExtensionNs="com.intellij">
+        <languageInjector implementation="sap.commerce.toolset.codeInsight.injection.FlexibleSearchLanguageInjector"/>
+        <languageInjector implementation="sap.commerce.toolset.codeInsight.injection.XmlToImpExLanguageInjector"/>
+        <languageInjector implementation="sap.commerce.toolset.codeInsight.injection.PolyglotQueryLanguageInjector"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <postStartupActivity order="first" id="hybrisProjectImport" implementation="sap.commerce.toolset.startup.HybrisProjectImportStartupActivity"/>
+        <postStartupActivity order="after hybrisProjectImport" implementation="sap.commerce.toolset.startup.HybrisProjectStructureStartupActivity"/>
+        <postStartupActivity order="after hybrisProjectImport" implementation="sap.commerce.toolset.startup.WhatsNewStartupActivity"/>
+        <backgroundPostStartupActivity implementation="sap.commerce.toolset.startup.HybrisPluginUpdateCheckerStartupActivity"/>
+        <backgroundPostStartupActivity implementation="sap.commerce.toolset.startup.PreLoadSystemsStartupActivity"/>
     </extensions>
 
     <actions>
-        <group id="HybrisToolsActions"
-               text="[y] SAP Commerce"
-               popup="true"
-               class="com.intellij.idea.plugin.hybris.actions.HybrisToolsActionGroup">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
-        </group>
+        <action id="hybris.hac.openIntegrationsSettings" class="sap.commerce.toolset.actionSystem.IntegrationsOpenSettingsAction">
+            <add-to-group group-id="sap.commerce.toolset.hac.chooseConnection"/>
+        </action>
+
         <!--        <action id="GenerateDomModel"-->
-        <!--                class="com.intellij.idea.plugin.hybris.system.type.model.generator.GenerateDomModelAction"-->
+        <!--                class="sap.commerce.toolset.typeSystem.model.generator.GenerateDomModelAction"-->
         <!--                text="Generate DOM Model...">-->
         <!--            <add-to-group group-id="ToolsMenu" anchor="last"/>-->
         <!--        </action>-->

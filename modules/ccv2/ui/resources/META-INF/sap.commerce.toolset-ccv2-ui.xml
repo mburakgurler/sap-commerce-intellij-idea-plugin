@@ -1,0 +1,79 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationConfigurable id="hybris.settings.ccv2" parentId="hybris.settings" displayName="CCv2"
+                                 provider="sap.commerce.toolset.ccv2.options.ApplicationCCv2SettingsConfigurableProvider"/>
+        <webHelpProvider implementation="sap.commerce.toolset.ccv2.help.CCv2WebHelpProvider"/>
+    </extensions>
+
+    <actions>
+        <action id="ccv2.show.settings" class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowSettings"/>
+
+        <action id="ccv2.open.settings.action" class="sap.commerce.toolset.ccv2.actionSystem.CCv2OpenSettingsAction"/>
+        <action id="ccv2.reset.cache.action" class="sap.commerce.toolset.ccv2.actionSystem.CCv2ResetCacheAction"/>
+
+        <group id="ccv2.toolbar.actions">
+            <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2FetchEnvironmentsAction"/>
+            <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2FetchDeploymentsAction"/>
+            <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2FetchBuildsAction"/>
+            <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2CreateBuildAction"/>
+
+            <reference ref="ccv2.reset.cache.action"/>
+            <separator/>
+
+            <group id="ccv2.toolbar.actions.show" text="View Options"
+                   popup="true"
+                   icon="AllIcons.Actions.Show">
+                <separator text="Show With Status"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowSuccessBuildsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowScheduledBuildsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowBuildingBuildsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowFailedBuildsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowDeletedBuildsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowUnknownBuildsAction"/>
+
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowProvisioningEnvironmentsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowAvailableEnvironmentsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowTerminatingEnvironmentsAction"/>
+                <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2ShowTerminatedEnvironmentsAction"/>
+            </group>
+            <separator/>
+
+            <reference ref="ccv2.open.settings.action"/>
+        </group>
+
+        <group id="ccv2.environment.toolbar.actions">
+            <reference ref="ccv2.open.settings.action"/>
+            <separator/>
+        </group>
+
+        <group id="ccv2.service.toolbar.actions">
+            <reference ref="ccv2.open.settings.action"/>
+            <separator/>
+        </group>
+    </actions>
+
+    <actions>
+        <action class="sap.commerce.toolset.ccv2.actionSystem.CCv2GroovyReplicaSelectionModeAction">
+            <add-to-group group-id="hybris.groovy.toolbar.mode"/>
+        </action>
+    </actions>
+
+</idea-plugin>

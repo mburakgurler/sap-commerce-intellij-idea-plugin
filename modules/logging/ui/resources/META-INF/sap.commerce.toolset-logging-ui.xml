@@ -1,0 +1,50 @@
+<!--
+  ~ This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+  ~ Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation, either version 3 of the
+  ~ License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public License
+  ~ along with this program. If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<idea-plugin>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.daemonBoundCodeVisionProvider implementation="sap.commerce.toolset.logging.codeInsight.hints.LoggerInlayHintsProvider"/>
+    </extensions>
+
+    <actions>
+        <action id="sap.cx.fetch.loggers.action" class="sap.commerce.toolset.logging.actionSystem.FetchLoggersStateAction"/>
+
+        <group id="sap.cx.loggers.toolbar.actions" searchable="false">
+            <reference ref="sap.commerce.toolset.hac.chooseConnection"/>
+            <reference ref="sap.cx.fetch.loggers.action"/>
+        </group>
+
+        <group id="sap.cx.logging.actions" popup="true" searchable="false">
+            <reference ref="sap.cx.fetch.loggers.action"/>
+
+            <separator text="Active Connection"/>
+            <reference ref="sap.commerce.toolset.hac.chooseConnection"/>
+
+            <separator text="Log Levels"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.OffLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.AllLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.TraceLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.DebugLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.InfoLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.WarnLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.ErrorLoggerAction"/>
+            <action class="sap.commerce.toolset.logging.actionSystem.FatalLoggerAction"/>
+        </group>
+    </actions>
+</idea-plugin>

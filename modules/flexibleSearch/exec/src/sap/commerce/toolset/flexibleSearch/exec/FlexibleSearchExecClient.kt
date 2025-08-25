@@ -1,0 +1,110 @@
+/*
+ * This file is part of "SAP Commerce Developers Toolset" plugin for IntelliJ IDEA.
+ * Copyright (C) 2019-2025 EPAM Systems <hybrisideaplugin@epam.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package sap.commerce.toolset.flexibleSearch.exec
+
+import com.google.gson.Gson
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
+import com.intellij.util.asSafely
+import kotlinx.coroutines.CoroutineScope
+import org.apache.http.HttpStatus
+import org.apache.http.message.BasicNameValuePair
+import sap.commerce.toolset.exec.ExecClient
+import sap.commerce.toolset.exec.settings.state.generatedURL
+import sap.commerce.toolset.flexibleSearch.exec.context.FlexibleSearchExecContext
+import sap.commerce.toolset.flexibleSearch.exec.context.FlexibleSearchExecResult
+import sap.commerce.toolset.flexibleSearch.exec.context.TableBuilder
+import sap.commerce.toolset.hac.exec.HacExecConnectionService
+import sap.commerce.toolset.hac.exec.http.HacHttpClient
+import java.io.Serial
+import java.nio.charset.StandardCharsets
+
+@Service(Service.Level.PROJECT)
+class FlexibleSearchExecClient(
+    project: Project,
+    coroutineScope: CoroutineScope
+) : ExecClient<FlexibleSearchExecContext, FlexibleSearchExecResult>(project, coroutineScope) {
+
+    override suspend fun onError(context: FlexibleSearchExecContext, exception: Throwable) = FlexibleSearchExecResult(
+        errorMessage = exception.message,
+        errorDetailMessage = exception.stackTraceToString()
+    )
+
+    override suspend fun execute(context: FlexibleSearchExecContext): FlexibleSearchExecResult {
+        val settings = HacExecConnectionService.getInstance(project).activeConnection
+        val actionUrl = "${settings.generatedURL}/console/flexsearch/execute"
+        val params = context.params()
+            .map { BasicNameValuePair(it.key, it.value) }
+
+        val response = HacHttpClient.getInstance(project)
+            .post(actionUrl, params, true, context.timeout, settings, null)
+        val statusLine = response.statusLine
+        val statusCode = statusLine.statusCode
+
+        if (statusCode != HttpStatus.SC_OK || response.entity == null) return FlexibleSearchExecResult(
+            statusCode = HttpStatus.SC_BAD_REQUEST,
+            errorMessage = "[$statusCode] ${statusLine.reasonPhrase}",
+        )
+
+        try {
+            val json = response.entity.content
+                .readAllBytes()
+                .toString(StandardCharsets.UTF_8)
+                .let { Gson().fromJson(it, HashMap::class.java) }
+
+            return json["exception"]
+                ?.asSafely<MutableMap<*, *>>()
+                ?.let { it["message"] }
+                ?.toString()
+                ?.let {
+                    FlexibleSearchExecResult(
+                        statusCode = HttpStatus.SC_BAD_REQUEST,
+                        errorMessage = it
+                    )
+                }
+                ?: FlexibleSearchExecResult(
+                    output = buildTableResult(json)
+                )
+        } catch (e: Exception) {
+            return FlexibleSearchExecResult(
+                statusCode = HttpStatus.SC_BAD_REQUEST,
+                errorMessage = "Cannot parse response from the server: ${e.message} $actionUrl"
+            )
+        }
+    }
+
+    private fun buildTableResult(json: HashMap<*, *>): String {
+        val tableBuilder = TableBuilder()
+
+        json["headers"].asSafely<MutableList<String>>()
+            ?.let { headers -> tableBuilder.addHeaders(headers) }
+        json["resultList"].asSafely<List<List<String>>>()
+            ?.forEach { row -> tableBuilder.addRow(row) }
+
+        return tableBuilder.toString()
+    }
+
+    companion object {
+        @Serial
+        private const val serialVersionUID: Long = -1238922198933240517L
+        fun getInstance(project: Project): FlexibleSearchExecClient = project.service()
+    }
+
+}
