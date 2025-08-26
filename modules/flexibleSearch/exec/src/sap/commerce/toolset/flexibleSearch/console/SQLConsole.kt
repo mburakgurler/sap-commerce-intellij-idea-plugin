@@ -64,10 +64,11 @@ class SQLConsole(project: Project, coroutineScope: CoroutineScope) : HybrisConso
     }
 
     override fun currentExecutionContext(content: String) = FlexibleSearchExecContext(
+        connection = activeConnection(),
         content = content,
         transactionMode = if (commitCheckbox.isSelected) TransactionMode.COMMIT else TransactionMode.ROLLBACK,
         queryMode = QueryMode.SQL,
-        settings = FlexibleSearchExecContext.defaultSettings(activeConnection()).modifiable()
+        settings = FlexibleSearchExecContext.defaultSettings(activeConnection()).mutable()
             .apply {
                 maxCount = maxRowsSpinner.number
             }

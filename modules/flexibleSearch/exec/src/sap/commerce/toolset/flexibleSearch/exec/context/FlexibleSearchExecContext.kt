@@ -25,6 +25,7 @@ import sap.commerce.toolset.hac.exec.settings.state.HacConnectionSettingsState
 import sap.commerce.toolset.settings.state.TransactionMode
 
 data class FlexibleSearchExecContext(
+    val connection: HacConnectionSettingsState,
     private val content: String = "",
     private val transactionMode: TransactionMode = TransactionMode.ROLLBACK,
     private val queryMode: QueryMode = QueryMode.FlexibleSearch,
@@ -51,24 +52,36 @@ data class FlexibleSearchExecContext(
         }
     }
 
-    data class Settings(val maxCount: Int, val locale: String, val dataSource: String, val user: String, val timeout: Int) : ExecContext.Settings {
-        override fun modifiable() = ModifiableSettings(
+    data class Settings(
+        val maxCount: Int,
+        val locale: String,
+        val dataSource: String,
+        val user: String,
+        override val timeout: Int
+    ) : ExecContext.Settings {
+        override fun mutable() = Mutable(
             maxCount = maxCount,
             locale = locale,
             dataSource = dataSource,
             user = user,
             timeout = timeout,
         )
-    }
 
-    data class ModifiableSettings(var maxCount: Int, var locale: String, var dataSource: String, var user: String, val timeout: Int) : ExecContext.ModifiableSettings {
-        override fun immutable() = Settings(
-            maxCount = maxCount,
-            locale = locale,
-            dataSource = dataSource,
-            user = user,
-            timeout = timeout,
-        )
+        data class Mutable(
+            var maxCount: Int,
+            var locale: String,
+            var dataSource: String,
+            var user: String,
+            override var timeout: Int
+        ) : ExecContext.Settings.Mutable {
+            override fun immutable() = Settings(
+                maxCount = maxCount,
+                locale = locale,
+                dataSource = dataSource,
+                user = user,
+                timeout = timeout,
+            )
+        }
     }
 
     companion object {

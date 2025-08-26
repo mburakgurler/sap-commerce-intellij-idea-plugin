@@ -74,6 +74,7 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
     fun setLogger(loggerName: String, logLevel: LogLevel, callback: (CoroutineScope, LoggingExecResult) -> Unit = { _, _ -> }) {
         val server = HacExecConnectionService.getInstance(project).activeConnection
         val context = LoggingExecContext(
+            connection = server,
             executionTitle = "Update Log Level Status for SAP Commerce [${server.shortenConnectionName}]...",
             loggerName = loggerName,
             logLevel = logLevel,
@@ -106,10 +107,13 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
 
     fun fetch(server: HacConnectionSettingsState) {
         val context = GroovyExecContext(
+            connection = server,
             executionTitle = "Fetching Loggers from SAP Commerce [${server.shortenConnectionName}]...",
             content = ExtensionsService.getInstance().findResource(CxLoggersConstants.EXTENSION_STATE_SCRIPT),
-            transactionMode = TransactionMode.ROLLBACK,
-            timeout =  server.timeout,
+            settings = GroovyExecContext.defaultSettings(server).copy(
+                transactionMode = TransactionMode.ROLLBACK,
+                timeout = server.timeout,
+            )
         )
 
         fetching = true
@@ -144,20 +148,24 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
 
                 when {
                     result.hasError -> notify(NotificationType.ERROR, "Failed to retrieve loggers state") {
-                        "<p>${result.errorMessage}</p>"
-                        "<p>Server: ${server.shortenConnectionName}</p>"
+                        """
+                            <p>${result.errorMessage}</p>
+                            <p>Server: ${server.shortenConnectionName}</p>
+                        """.trimIndent()
                     }
 
                     loggers == null -> notify(NotificationType.WARNING, "Unable to retrieve loggers state") {
-                        "<p>No Loggers information returned from the remote server or is in the incorrect format.</p>" +
-                            "<p>Server: ${server.shortenConnectionName}</p>"
+                        """
+                            <p>No Loggers information returned from the remote server or is in the incorrect format.</p>
+                            <p>Server: ${server.shortenConnectionName}</p>
+                        """.trimIndent()
                     }
 
                     else -> notify(NotificationType.INFORMATION, "Loggers state is fetched.") {
                         """
-                    <p>Declared loggers: ${loggers.size}</p>
-                    <p>Server: ${server.shortenConnectionName}</p>
-                """.trimIndent()
+                            <p>Declared loggers: ${loggers.size}</p>
+                            <p>Server: ${server.shortenConnectionName}</p>
+                        """.trimIndent()
                     }
                 }
             }

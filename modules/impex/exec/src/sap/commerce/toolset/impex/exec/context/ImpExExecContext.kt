@@ -25,6 +25,7 @@ import sap.commerce.toolset.hac.exec.settings.state.HacConnectionSettingsState
 import java.nio.charset.StandardCharsets
 
 data class ImpExExecContext(
+    val connection: HacConnectionSettingsState,
     private val content: String = "",
     val dialect: Dialect = Dialect.IMPEX,
     val executionMode: ExecutionMode = ExecutionMode.IMPORT,
@@ -54,14 +55,14 @@ data class ImpExExecContext(
     data class Settings(
         val validationMode: ValidationMode,
         val maxThreads: Int,
-        val timeout: Int,
+        override val timeout: Int,
         val encoding: String,
         val legacyMode: Toggle,
         val enableCodeExecution: Toggle,
         val sldEnabled: Toggle,
         val distributedMode: Toggle,
     ) : ExecContext.Settings {
-        override fun modifiable() = ModifiableSettings(
+        override fun mutable() = Mutable(
             validationMode = validationMode,
             maxThreads = maxThreads,
             timeout = timeout,
@@ -71,28 +72,28 @@ data class ImpExExecContext(
             sldEnabled = sldEnabled,
             distributedMode = distributedMode,
         )
-    }
 
-    data class ModifiableSettings(
-        var validationMode: ValidationMode,
-        var maxThreads: Int,
-        var timeout: Int,
-        var encoding: String,
-        var legacyMode: Toggle,
-        var enableCodeExecution: Toggle,
-        var sldEnabled: Toggle,
-        var distributedMode: Toggle,
-    ) : ExecContext.ModifiableSettings {
-        override fun immutable() = Settings(
-            validationMode = validationMode,
-            maxThreads = maxThreads,
-            timeout = timeout,
-            encoding = encoding,
-            legacyMode = legacyMode,
-            enableCodeExecution = enableCodeExecution,
-            sldEnabled = sldEnabled,
-            distributedMode = distributedMode,
-        )
+        data class Mutable(
+            var validationMode: ValidationMode,
+            var maxThreads: Int,
+            override var timeout: Int,
+            var encoding: String,
+            var legacyMode: Toggle,
+            var enableCodeExecution: Toggle,
+            var sldEnabled: Toggle,
+            var distributedMode: Toggle,
+        ) : ExecContext.Settings.Mutable {
+            override fun immutable() = Settings(
+                validationMode = validationMode,
+                maxThreads = maxThreads,
+                timeout = timeout,
+                encoding = encoding,
+                legacyMode = legacyMode,
+                enableCodeExecution = enableCodeExecution,
+                sldEnabled = sldEnabled,
+                distributedMode = distributedMode,
+            )
+        }
     }
 
     enum class Dialect(val title: String) {
