@@ -26,13 +26,15 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import sap.commerce.toolset.actionSystem.HybrisActionPlaces
+import sap.commerce.toolset.ui.toolwindow.ContentActivationAware
 import java.io.Serial
 
 class LoggersView(
     val project: Project,
     coroutineScope: CoroutineScope
-) : SimpleToolWindowPanel(false), Disposable {
+) : SimpleToolWindowPanel(false), ContentActivationAware, Disposable {
 
+    var activated = false;
     val treePane: LoggersSplitView
 
     override fun dispose() = Unit
@@ -41,10 +43,20 @@ class LoggersView(
         installToolbar()
         treePane = LoggersSplitView(project, coroutineScope)
         setContent(treePane)
+        //todo add a listener for project import completion event
 
         Disposer.register(this, treePane)
     }
 
+    override fun onActivated() {
+        activated = true
+        //todo refresh tree only if project import has been completed
+        treePane.updateTree()
+    }
+
+    override fun onDeactivated() {
+        activated = false
+    }
 
     private fun installToolbar() {
         val toolbar = with(DefaultActionGroup()) {

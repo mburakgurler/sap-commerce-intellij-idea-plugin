@@ -18,13 +18,15 @@
 
 package sap.commerce.toolset.logging
 
-import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.util.asSafely
+import sap.commerce.toolset.logging.ui.tree.LoggersOptionsTree
+import javax.swing.tree.DefaultMutableTreeNode
 
-object CxLoggersConstants {
-
-    const val ROOT_LOGGER_NAME = "root"
-    const val EXTENSION_STATE_SCRIPT = "cx-loggers-state.groovy"
-    const val UPDATE_CX_LOGGERS_STATE = "update-cx-loggers-state.groovy"
-    const val CX_LOGGERS_BUNDLED = "cx-loggers-templates.json"
-    val DATA_KEY_LOGGER_IDENTIFIER = DataKey.create<String>("sap.cx.logger.identifier")
-}
+internal fun AnActionEvent.selectedNode(): Any? = this.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)
+    ?.asSafely<LoggersOptionsTree>()
+    ?.selectionPath
+    ?.lastPathComponent
+    ?.asSafely<DefaultMutableTreeNode>()
+    ?.userObject

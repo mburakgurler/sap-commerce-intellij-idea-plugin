@@ -22,48 +22,32 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import sap.commerce.toolset.Notifications
+import com.intellij.util.asSafely
+import sap.commerce.toolset.HybrisIcons
 import sap.commerce.toolset.logging.CxLoggerAccess
-import sap.commerce.toolset.logging.CxLoggersConstants
-import sap.commerce.toolset.logging.LogLevel
+import sap.commerce.toolset.logging.selectedNode
+import sap.commerce.toolset.logging.ui.tree.nodes.BundledLoggersTemplateItemNode
 
-abstract class CxLoggerAction(private val logLevel: LogLevel) : AnAction() {
+class ApplyBundledTemplateAction : AnAction() {
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun actionPerformed(e: AnActionEvent) {
-        val project = e.project ?: return
-        val logIdentifier = e.getData(CxLoggersConstants.DATA_KEY_LOGGER_IDENTIFIER)
-
-        if (logIdentifier == null) {
-            Notifications.error("Unable to change the log level", "Cannot retrieve a logger name.")
-                .hideAfter(5)
-                .notify(project)
-            return
-        }
-
-        CxLoggerAccess.getInstance(project).setLogger(logIdentifier, logLevel)
-    }
-
-    override fun update(e: AnActionEvent) {
         e.presentation.isVisible = ActionPlaces.ACTION_SEARCH != e.place
         if (!e.presentation.isVisible) return
 
-        super.update(e)
         val project = e.project ?: return
 
-        e.presentation.text = logLevel.name
-        e.presentation.icon = logLevel.icon
-        e.presentation.isEnabled = CxLoggerAccess.getInstance(project).ready
+        e.selectedNode()
+            ?.asSafely<BundledLoggersTemplateItemNode>()
+            ?.loggers
+            ?.let {
+                CxLoggerAccess.getInstance(project).setLoggers(it)
+            }
+    }
+
+    override fun update(e: AnActionEvent) {
+        e.presentation.text = "Apply Template"
+        e.presentation.icon = HybrisIcons.Log.Template.EXECUTE
     }
 }
-
-class AllLoggerAction : CxLoggerAction(LogLevel.ALL)
-class OffLoggerAction : CxLoggerAction(LogLevel.OFF)
-class TraceLoggerAction : CxLoggerAction(LogLevel.TRACE)
-class DebugLoggerAction : CxLoggerAction(LogLevel.DEBUG)
-class InfoLoggerAction : CxLoggerAction(LogLevel.INFO)
-class WarnLoggerAction : CxLoggerAction(LogLevel.WARN)
-class ErrorLoggerAction : CxLoggerAction(LogLevel.ERROR)
-class FatalLoggerAction : CxLoggerAction(LogLevel.FATAL)
-

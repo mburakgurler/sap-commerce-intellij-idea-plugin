@@ -24,6 +24,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
+import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,6 +37,7 @@ import sap.commerce.toolset.console.toolWindow.HybrisConsolesToolWindow
 import sap.commerce.toolset.isHybrisProject
 import sap.commerce.toolset.logging.ui.LoggersView
 import sap.commerce.toolset.typeSystem.ui.TSView
+import sap.commerce.toolset.ui.toolwindow.ContentActivationAware
 
 class HybrisToolWindowFactory(private val coroutineScope: CoroutineScope) : ToolWindowFactory, DumbAware {
 
@@ -49,6 +53,21 @@ class HybrisToolWindowFactory(private val coroutineScope: CoroutineScope) : Tool
                     createCCv2CLIContent(toolWindow, project, CCv2View(project)),
                     createLoggersContent(toolWindow, LoggersView(project, coroutineScope))
                 ).forEach { toolWindow.contentManager.addContent(it) }
+
+                toolWindow.contentManager.addContentManagerListener(object : ContentManagerListener {
+                    override fun selectionChanged(event: ContentManagerEvent) {
+                        event.content.component
+                            .asSafely<ContentActivationAware>()
+                            ?.onActivated()
+                        toolWindow.contentManager.contents
+                            .filter { it.displayName != event.content.displayName }
+                            .forEach {
+                                it.component
+                                    .asSafely<ContentActivationAware>()
+                                    ?.onDeactivated()
+                            }
+                    }
+                })
             }
         }
     }

@@ -112,7 +112,6 @@ class LoggersStateView(
         get() = panel.value
 
     fun renderFetchLoggers() = toggleView(showFetchLoggers)
-    fun renderNoLoggerTemplates() = toggleView(showNoLogger)
     fun renderNothingSelected() = toggleView(showNothingSelected)
     fun renderLoggers(loggers: Map<String, CxLoggerModel>) {
         val view = if (loggers.isEmpty()) noLoggersView()
@@ -240,7 +239,6 @@ class LoggersStateView(
                         }
                     }
                 )
-                    .comment("Effective level")
                     .component
 
                 loggerNameField = textField()
@@ -254,7 +252,6 @@ class LoggersStateView(
                         if (it.text.isBlank()) error("Please enter a logger name")
                         else null
                     }
-                    .comment("Logger (package or class name)")
                     .addKeyListener(this@LoggersStateView, object : KeyListener {
                         override fun keyReleased(e: KeyEvent) {
                             if (e.keyCode == KeyEvent.VK_ENTER) {
@@ -269,6 +266,14 @@ class LoggersStateView(
                 }
             }
                 .layout(RowLayout.PARENT_GRID)
+            row {
+                label("Effective level")
+                    .bold()
+                label("Logger (package or class name)")
+                    .bold()
+                    .align(AlignX.FILL)
+
+            }.layout(RowLayout.PARENT_GRID)
         }
             .apply {
                 registerValidators(this@LoggersStateView) { validations ->

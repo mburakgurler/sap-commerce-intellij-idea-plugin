@@ -16,9 +16,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package sap.commerce.toolset.logging.ui.tree.nodes
+package sap.commerce.toolset.logging.template
 
-import com.intellij.openapi.project.Project
-import sap.commerce.toolset.HybrisIcons
+import sap.commerce.toolset.logging.CxLoggerModel
+import javax.swing.Icon
 
-class BundledLoggersTemplateLoggersOptionsNode(project: Project) : LoggersOptionsNode("Bundled", HybrisIcons.Log.Template.BUNDLED, project)
+data class CxLoggersTemplateModel(
+    val name: String,
+    var loggers: List<CxLoggerModel>,
+    var icon: Icon
+)

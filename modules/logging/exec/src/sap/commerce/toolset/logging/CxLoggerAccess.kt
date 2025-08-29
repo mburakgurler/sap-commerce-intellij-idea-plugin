@@ -28,6 +28,7 @@ import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import sap.commerce.toolset.Notifications
+import sap.commerce.toolset.exec.context.DefaultExecResult
 import sap.commerce.toolset.exec.settings.state.ExecConnectionScope
 import sap.commerce.toolset.exec.settings.state.shortenConnectionName
 import sap.commerce.toolset.extensions.ExtensionsService
@@ -47,7 +48,9 @@ import java.util.*
 class CxLoggerAccess(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
 
     private var fetching: Boolean = false
-    private val loggersStates = WeakHashMap<HacConnectionSettingsState, CxLoggersState>()
+
+    //map: key is HacConnectionSettingsState.UUID value is a Pair of CxLoggersState and HacConnectionSettingsState
+    private val loggersStates = WeakHashMap<String, CxLoggersState>()
 
     val ready: Boolean
         get() = !fetching
@@ -55,7 +58,7 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
     val stateInitialized: Boolean
         get() {
             val server = HacExecConnectionService.getInstance(project).activeConnection
-            return state(server).initialized
+            return state(server.uuid).initialized
         }
 
     init {
@@ -64,43 +67,48 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
                 override fun onActive(connection: HacConnectionSettingsState) = refresh()
                 override fun onSave(settings: Map<ExecConnectionScope, List<HacConnectionSettingsState>>) = settings.values
                     .flatten()
-                    .forEach { clearState(it) }
+                    .forEach { clearState(it.uuid) }
+
+                override fun onRemoved(connection: HacConnectionSettingsState) {
+                    loggersStates.remove(connection.uuid)
+                }
             })
         }
     }
 
     fun logger(loggerIdentifier: String): CxLoggerModel? {
-        val server = HacExecConnectionService.getInstance(project).activeConnection
-        return if (stateInitialized) state(server).get(loggerIdentifier) else null
+        return if (stateInitialized)
+            state(HacExecConnectionService.getInstance(project).activeConnection.uuid).get(loggerIdentifier)
+        else null
     }
 
     fun setLogger(loggerName: String, logLevel: LogLevel, callback: (CoroutineScope, LoggingExecResult) -> Unit = { _, _ -> }) {
-        val server = HacExecConnectionService.getInstance(project).activeConnection
+        val activeConnection = HacExecConnectionService.getInstance(project).activeConnection
         val context = LoggingExecContext(
-            connection = server,
-            executionTitle = "Update Log Level Status for SAP Commerce [${server.shortenConnectionName}]...",
+            connection = activeConnection,
+            executionTitle = "Update Log Level Status for SAP Commerce [${activeConnection.shortenConnectionName}]...",
             loggerName = loggerName,
             logLevel = logLevel,
-            timeout = server.timeout,
+            timeout = activeConnection.timeout,
         )
         fetching = true
         LoggingExecClient.getInstance(project).execute(context) { coroutineScope, result ->
-            updateState(result.loggers, server)
+            updateState(result.loggers, activeConnection.uuid)
             callback.invoke(coroutineScope, result)
 
-            project.messageBus.syncPublisher(CxLoggersStateListener.TOPIC).onLoggersStateChanged(server)
+            project.messageBus.syncPublisher(CxLoggersStateListener.TOPIC).onLoggersStateChanged(activeConnection)
 
             if (result.hasError) notify(NotificationType.ERROR, "Failed To Update Log Level") {
                 """
                 <p>${result.errorMessage}</p>
-                <p>Server: ${server.shortenConnectionName}</p>
+                <p>Server: ${activeConnection.shortenConnectionName}</p>
             """.trimIndent()
             }
             else notify(NotificationType.INFORMATION, "Log Level Updated") {
                 """
                 <p>Level : $logLevel</p>
                 <p>Logger: $loggerName</p>
-                <p>Server: ${server.shortenConnectionName}</p>
+                <p>Server: ${activeConnection.shortenConnectionName}</p>
             """.trimIndent()
             }
         }
@@ -121,6 +129,91 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
             )
         )
 
+        executeLoggersGroovyScript(context, server) { _, groovyScriptResult ->
+            val result = groovyScriptResult.result
+            val loggers = groovyScriptResult.loggers
+
+            when {
+                result.hasError -> notify(NotificationType.ERROR, "Failed to retrieve loggers state") {
+                    """
+                                <p>${result.errorMessage}</p>
+                                <p>Server: ${server.shortenConnectionName}</p>
+                            """.trimIndent()
+                }
+
+                loggers == null -> notify(NotificationType.WARNING, "Unable to retrieve loggers state") {
+                    """
+                                <p>No Loggers information returned from the remote server or is in the incorrect format.</p>
+                                <p>Server: ${server.shortenConnectionName}</p>
+                            """.trimIndent()
+                }
+
+                else -> notify(NotificationType.INFORMATION, "Loggers state is fetched.") {
+                    """
+                                <p>Declared loggers: ${loggers.size}</p>
+                                <p>Server: ${server.shortenConnectionName}</p>
+                            """.trimIndent()
+                }
+            }
+
+        }
+    }
+
+    fun setLoggers(loggers: List<CxLoggerModel>, callback: (CoroutineScope, DefaultExecResult) -> Unit = { _, _ -> }) {
+        val groovyScriptContent = loggers.joinToString(",\n") {
+            """
+                "${it.name}" : "${it.level}"
+            """.trimIndent()
+        }
+            .let { ExtensionsService.getInstance().findResource(CxLoggersConstants.UPDATE_CX_LOGGERS_STATE).replace("[loggersMapToBeReplacedPlaceholder]", it) }
+
+        val server = HacExecConnectionService.getInstance(project).activeConnection
+        val context = GroovyExecContext(
+            connection = server,
+            executionTitle = "Applying the Loggers Template for SAP Commerce [${server.shortenConnectionName}]...",
+            content = groovyScriptContent,
+            settings = GroovyExecContext.defaultSettings(server).copy(
+                transactionMode = TransactionMode.ROLLBACK,
+                timeout = server.timeout
+            )
+        )
+
+        executeLoggersGroovyScript(
+            context,
+            server
+        ) { _, groovyScriptResult ->
+
+            callback.invoke(coroutineScope, groovyScriptResult.result)
+
+            val result = groovyScriptResult.result
+            val loggers = groovyScriptResult.loggers
+
+            when {
+                result.hasError -> notify(NotificationType.ERROR, "Failed to apply the loggers template") {
+                    "<p>${result.errorMessage}</p>"
+                    "<p>Server: ${server.shortenConnectionName}</p>"
+                }
+
+                loggers == null -> notify(NotificationType.WARNING, "Unable to apply the loggers template") {
+                    "<p>No Loggers information returned from the remote server or is in the incorrect format.</p>" +
+                        "<p>Server: ${server.shortenConnectionName}</p>"
+                }
+
+                else -> notify(NotificationType.INFORMATION, "The logger template is applied.") {
+                    """
+                        <p>Declared loggers: ${loggers.size}</p>
+                        <p>Server: ${server.shortenConnectionName}</p>
+                    """.trimIndent()
+                }
+            }
+
+        }
+    }
+
+    private fun executeLoggersGroovyScript(
+        context: GroovyExecContext, server: HacConnectionSettingsState,
+        callback: (CoroutineScope, LoggersGroovyScriptExecResult) -> Unit = { _, _ -> }
+    ) {
         GroovyExecClient.getInstance(project).execute(context) { coroutineScope, result ->
             coroutineScope.launch {
                 val loggers = result.result
@@ -133,7 +226,7 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
                         val parentName = it[2]
 
                         val psiElementPointer = getPsiElementPointer(project, loggerIdentifier)
-                        val icon = getIcon(project, loggerIdentifier)
+                        val icon = resolveIcon(project, loggerIdentifier)
 
                         CxLoggerModel.of(loggerIdentifier, effectiveLevel, parentName, false, icon, psiElementPointer)
                     }
@@ -142,46 +235,25 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
                     ?.takeIf { it.isNotEmpty() }
 
                 if (loggers == null || result.hasError) {
-                    clearState(server)
+                    clearState(server.uuid)
                 } else {
-                    updateState(loggers, server)
+                    updateState(loggers, server.uuid)
                 }
+
+                callback.invoke(coroutineScope, LoggersGroovyScriptExecResult(loggers, result))
 
                 project.messageBus.syncPublisher(CxLoggersStateListener.TOPIC).onLoggersStateChanged(server)
-
-                when {
-                    result.hasError -> notify(NotificationType.ERROR, "Failed to retrieve loggers state") {
-                        """
-                            <p>${result.errorMessage}</p>
-                            <p>Server: ${server.shortenConnectionName}</p>
-                        """.trimIndent()
-                    }
-
-                    loggers == null -> notify(NotificationType.WARNING, "Unable to retrieve loggers state") {
-                        """
-                            <p>No Loggers information returned from the remote server or is in the incorrect format.</p>
-                            <p>Server: ${server.shortenConnectionName}</p>
-                        """.trimIndent()
-                    }
-
-                    else -> notify(NotificationType.INFORMATION, "Loggers state is fetched.") {
-                        """
-                            <p>Declared loggers: ${loggers.size}</p>
-                            <p>Server: ${server.shortenConnectionName}</p>
-                        """.trimIndent()
-                    }
-                }
             }
         }
     }
 
-    fun state(settings: HacConnectionSettingsState): CxLoggersState = loggersStates
-        .computeIfAbsent(settings) { CxLoggersState() }
+    fun state(settingsUUID: String): CxLoggersState = loggersStates
+        .computeIfAbsent(settingsUUID) { CxLoggersState() }
 
-    private fun updateState(loggers: Map<String, CxLoggerModel>?, settings: HacConnectionSettingsState) {
+    private fun updateState(loggers: Map<String, CxLoggerModel>?, settingsUUID: String) {
         coroutineScope.launch {
 
-            state(settings).update(loggers ?: emptyMap())
+            state(settingsUUID).update(loggers ?: emptyMap())
 
             edtWriteAction {
                 PsiDocumentManager.getInstance(project).reparseFiles(emptyList(), true)
@@ -201,8 +273,8 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
         loggersStates.clear()
     }
 
-    private fun clearState(settings: HacConnectionSettingsState) {
-        val logState = loggersStates[settings]
+    private fun clearState(settingsUUID: String) {
+        val logState = loggersStates[settingsUUID]
         logState?.clear()
 
         coroutineScope.launch {
@@ -230,3 +302,8 @@ class CxLoggerAccess(private val project: Project, private val coroutineScope: C
         fun getInstance(project: Project): CxLoggerAccess = project.service()
     }
 }
+
+private data class LoggersGroovyScriptExecResult(
+    val loggers: Map<String, CxLoggerModel>? = null,
+    val result: DefaultExecResult
+)

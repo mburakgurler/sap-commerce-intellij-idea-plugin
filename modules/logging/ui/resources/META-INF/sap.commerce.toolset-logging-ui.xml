@@ -25,6 +25,8 @@
     <actions>
         <action id="sap.cx.fetch.loggers.action" class="sap.commerce.toolset.logging.actionSystem.FetchLoggersStateAction"/>
 
+        <action id="sap.cx.loggers.apply.bundle.template" class="sap.commerce.toolset.logging.actionSystem.ApplyBundledTemplateAction"/>
+
         <group id="sap.cx.loggers.toolbar.actions" searchable="false">
             <reference ref="sap.commerce.toolset.hac.chooseConnection"/>
             <reference ref="sap.cx.fetch.loggers.action"/>
@@ -46,5 +48,7 @@
             <action class="sap.commerce.toolset.logging.actionSystem.ErrorLoggerAction"/>
             <action class="sap.commerce.toolset.logging.actionSystem.FatalLoggerAction"/>
         </group>
+
+        <group id="sap.cx.loggers.toolwindow.menu" popup="true" searchable="false" class="sap.commerce.toolset.logging.actionSystem.CxLoggersContextMenuActionGroup"/>
     </actions>
 </idea-plugin>

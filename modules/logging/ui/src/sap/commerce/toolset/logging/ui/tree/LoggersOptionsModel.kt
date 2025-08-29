@@ -19,6 +19,7 @@
 package sap.commerce.toolset.logging.ui.tree
 
 import com.intellij.openapi.Disposable
+import com.intellij.ui.tree.BaseTreeModel
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.Invoker
 import com.intellij.util.concurrency.InvokerSupplier
@@ -29,9 +30,10 @@ import javax.swing.tree.TreePath
 
 class LoggersOptionsModel(
     private val rootTreeNode: LoggersOptionsTreeNode
-) : com.intellij.ui.tree.BaseTreeModel<LoggersOptionsTreeNode>(), Disposable, InvokerSupplier {
+) : BaseTreeModel<LoggersOptionsTreeNode>(), Disposable, InvokerSupplier {
 
-    private var connections: Map<HacConnectionSettingsState, Boolean>? = null
+    //map of connections to their active state
+    private var connections: List<HacConnectionSettingsState>? = null
     private val nodes = mutableMapOf<LoggersNode, LoggersOptionsTreeNode>()
     private val myInvoker = Invoker.forBackgroundThreadWithReadAction(this)
 
@@ -41,7 +43,7 @@ class LoggersOptionsModel(
         .asSafely<LoggersOptionsTreeNode>()
         ?.userObject
         ?.asSafely<LoggersNode>()
-        ?.getChildren(LoggersNodeParameters(connections ?: emptyMap()))
+        ?.getChildren(LoggersNodeParameters(connections ?: emptyList()))
         ?.onEach { it.update() }
         ?.map {
             nodes.computeIfAbsent(it) { _ -> LoggersOptionsTreeNode(it) }
@@ -49,7 +51,7 @@ class LoggersOptionsModel(
 
     override fun getInvoker() = myInvoker
 
-    fun reload(connections: Map<HacConnectionSettingsState, Boolean>) {
+    fun reload(connections: List<HacConnectionSettingsState>) {
         this.connections = connections
 
         treeStructureChanged(TreePath(root), null, null)

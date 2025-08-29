@@ -22,6 +22,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.PopupHandler
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
@@ -34,10 +35,7 @@ import sap.commerce.toolset.logging.CxLoggerAccess
 import sap.commerce.toolset.logging.exec.event.CxLoggersStateListener
 import sap.commerce.toolset.logging.ui.tree.LoggersOptionsTree
 import sap.commerce.toolset.logging.ui.tree.LoggersOptionsTreeNode
-import sap.commerce.toolset.logging.ui.tree.nodes.BundledLoggersTemplateLoggersOptionsNode
-import sap.commerce.toolset.logging.ui.tree.nodes.CustomLoggersTemplateLoggersOptionsNode
-import sap.commerce.toolset.logging.ui.tree.nodes.LoggersHacConnectionNode
-import sap.commerce.toolset.logging.ui.tree.nodes.LoggersNode
+import sap.commerce.toolset.logging.ui.tree.nodes.*
 import sap.commerce.toolset.ui.addMouseListener
 import sap.commerce.toolset.ui.addTreeModelListener
 import sap.commerce.toolset.ui.addTreeSelectionListener
@@ -55,25 +53,21 @@ class LoggersSplitView(
 
     private val tree = LoggersOptionsTree(project).apply { registerListeners(this) }
     private val loggersStateView = LoggersStateView(project, coroutineScope)
+    private val loggersTemplatesStateView = LoggersTemplatesStateView(project, coroutineScope)
 
     init {
         firstComponent = JBScrollPane(tree)
         secondComponent = loggersStateView.view
 
-        //PopupHandler.installPopupMenu(tree, "action.group.id", "place")
+        PopupHandler.installPopupMenu(tree, "sap.cx.loggers.toolwindow.menu", "Sap.Cx.LoggersToolWindow")
         Disposer.register(this, tree)
         Disposer.register(this, loggersStateView)
-
-        // TODO: review this logic, let's NOT build the tree on init, instead render it on first show
-        val activeConnection = HacExecConnectionService.getInstance(project).activeConnection
-        updateTree(activeConnection)
+        Disposer.register(this, loggersTemplatesStateView)
 
         with(project.messageBus.connect(this)) {
             subscribe(HacConnectionSettingsListener.TOPIC, object : HacConnectionSettingsListener {
-                override fun onActive(connection: HacConnectionSettingsState) = updateTree(connection)
-                override fun onSave(settings: Map<ExecConnectionScope, List<HacConnectionSettingsState>>) = settings.values
-                    .flatten()
-                    .forEach { updateTree(it) }
+                override fun onActive(connection: HacConnectionSettingsState) = updateTree()
+                override fun onSave(settings: Map<ExecConnectionScope, List<HacConnectionSettingsState>>) = updateTree()
             })
 
             subscribe(CxLoggersStateListener.TOPIC, object : CxLoggersStateListener {
@@ -82,17 +76,15 @@ class LoggersSplitView(
                         ?.asSafely<LoggersOptionsTreeNode>()
                         ?.userObject
                         ?.asSafely<LoggersHacConnectionNode>()
-                        ?.takeIf { it.connectionSettings == remoteConnection }
+                        ?.takeIf { it.connectionUUID == remoteConnection.uuid }
                         ?.let { updateSecondComponent(it) }
                 }
             })
         }
     }
 
-    private fun updateTree(settings: HacConnectionSettingsState) {
-        val connections = HacExecConnectionService.getInstance(project).connections
-            .associateWith { (it == settings) }
-        tree.update(connections)
+    fun updateTree() {
+        tree.update(HacExecConnectionService.getInstance(project).connections)
     }
 
     private fun registerListeners(tree: LoggersOptionsTree) = tree
@@ -117,7 +109,9 @@ class LoggersSplitView(
                     ?.pathData(LoggersHacConnectionNode::class)
                     ?.let {
                         e.consume()
-                        CxLoggerAccess.getInstance(project).fetch(it.connectionSettings)
+                        HacExecConnectionService.getInstance(project).connections
+                            .find { connection -> connection.uuid == it.connectionUUID}
+                            ?.let { connection -> CxLoggerAccess.getInstance(project).fetch(connection) }
                     }
             }
         })
@@ -127,13 +121,36 @@ class LoggersSplitView(
             if (project.isDisposed) return@launch
 
             when (node) {
-                is LoggersHacConnectionNode -> CxLoggerAccess.getInstance(project).state(node.connectionSettings).get()
-                    ?.let { loggersStateView.renderLoggers(it) }
-                    ?: loggersStateView.renderFetchLoggers()
+                is LoggersHacConnectionNode -> {
+                    secondComponent = loggersStateView.view
 
-                is BundledLoggersTemplateLoggersOptionsNode -> loggersStateView.renderNoLoggerTemplates()
-                is CustomLoggersTemplateLoggersOptionsNode -> loggersStateView.renderNoLoggerTemplates()
-                else -> loggersStateView.renderNothingSelected()
+                    CxLoggerAccess.getInstance(project).state(node.connectionUUID).get()
+                        ?.let { loggersStateView.renderLoggers(it) }
+                        ?: loggersStateView.renderFetchLoggers()
+                }
+
+                is BundledLoggersTemplateGroupNode -> {
+                    secondComponent = loggersTemplatesStateView.view
+
+                    loggersTemplatesStateView.renderNothingSelected()
+                }
+                is CustomLoggersTemplateLoggersOptionsNode -> {
+                    secondComponent = loggersTemplatesStateView.view
+
+                    loggersTemplatesStateView.renderNoLoggerTemplates()
+                }
+                is BundledLoggersTemplateItemNode -> {
+                    secondComponent = loggersTemplatesStateView.view
+
+                    node.loggers.associateBy { it.name }.let {
+                        loggersTemplatesStateView.renderLoggersTemplate(it) }
+                }
+
+                else -> {
+                    secondComponent = loggersStateView.view
+
+                    loggersStateView.renderNothingSelected()
+                }
             }
         }
     }

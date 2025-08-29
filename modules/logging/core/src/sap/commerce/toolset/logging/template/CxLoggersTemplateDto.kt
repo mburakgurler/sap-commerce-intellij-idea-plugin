@@ -16,15 +16,27 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package sap.commerce.toolset.logging
+package sap.commerce.toolset.logging.template
 
-import com.intellij.openapi.actionSystem.DataKey
+import com.google.gson.annotations.SerializedName
 
-object CxLoggersConstants {
+data class CxLoggersTemplatesDto(
+    @SerializedName("templates")
+    var templates: List<CxLoggersDto>
+)
 
-    const val ROOT_LOGGER_NAME = "root"
-    const val EXTENSION_STATE_SCRIPT = "cx-loggers-state.groovy"
-    const val UPDATE_CX_LOGGERS_STATE = "update-cx-loggers-state.groovy"
-    const val CX_LOGGERS_BUNDLED = "cx-loggers-templates.json"
-    val DATA_KEY_LOGGER_IDENTIFIER = DataKey.create<String>("sap.cx.logger.identifier")
-}
+data class CxLoggersDto(
+    @SerializedName("name")
+    val name: String,
+    @SerializedName("loggers")
+    var loggers: List<CxLoggerDto>,
+    @SerializedName("icon")
+    var iconName: String? = null
+)
+
+data class CxLoggerDto(
+    @SerializedName("identifier")
+    var identifier: String,
+    @SerializedName("effectiveLevel")
+    var effectiveLevel: String
+)
