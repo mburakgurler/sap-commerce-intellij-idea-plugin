@@ -15,27 +15,30 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+package sap.commerce.toolset.exec.ui
 
-package sap.commerce.toolset.logging.ui.tree.nodes
+import sap.commerce.toolset.exec.settings.state.ExecConnectionSettingsState
+import java.io.Serial
+import javax.swing.DefaultComboBoxModel
 
-import com.intellij.ide.projectView.PresentationData
-import com.intellij.openapi.project.Project
-import com.intellij.ui.SimpleTextAttributes
-import sap.commerce.toolset.logging.CxLoggerModel
-import javax.swing.Icon
+class ConnectionComboBoxModel<T : ExecConnectionSettingsState>(
+    private val allowBlank: Boolean = false,
+    private val onSelectedItem: ((Any?) -> Unit)? = null
+) : DefaultComboBoxModel<T>() {
 
-class BundledLoggersTemplateItemNode(
-    val loggers: List<CxLoggerModel>,
-    text: String,
-    icon: Icon?,
-    project: Project
-) : LoggersOptionsNode(text, icon, project) {
+    override fun setSelectedItem(anObject: Any?) {
+        super.setSelectedItem(anObject)
+        onSelectedItem?.invoke(anObject)
+    }
 
-    override fun update(presentation: PresentationData) {
-        super.update(presentation)
+    fun refresh(subscriptions: List<T>) {
+        removeAllElements()
+        if (allowBlank) addElement(null)
+        addAll(subscriptions.sortedBy { (it as ExecConnectionSettingsState).presentationName })
+    }
 
-        val tip = " ${loggers.size} logger(s)"
-
-        presentation.addText(ColoredFragment(tip, SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES))
+    companion object {
+        @Serial
+        private val serialVersionUID: Long = 4646717472092758251L
     }
 }

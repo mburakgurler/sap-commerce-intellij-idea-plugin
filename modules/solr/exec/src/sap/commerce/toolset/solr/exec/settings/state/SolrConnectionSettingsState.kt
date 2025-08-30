@@ -19,8 +19,9 @@
 package sap.commerce.toolset.solr.exec.settings.state
 
 import com.intellij.credentialStore.Credentials
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Transient
 import sap.commerce.toolset.exec.ExecConstants
 import sap.commerce.toolset.exec.settings.state.ExecConnectionScope
 import sap.commerce.toolset.exec.settings.state.ExecConnectionSettingsState
@@ -37,20 +38,7 @@ data class SolrConnectionSettingsState(
     @OptionTag override val ssl: Boolean = true,
     @OptionTag override val timeout: Int = SolrConstants.CONNECTION_TIMEOUT_MILLIS,
     @OptionTag val socketTimeout: Int = SolrConstants.SOCKET_TIMEOUT_MILLIS,
-
-    @Transient
-    override val credentials: Credentials? = null,
 ) : ExecConnectionSettingsState {
-
-    private val dynamicCredentials
-        @Transient
-        get() = credentials ?: retrieveCredentials()
-    override val username
-        @Transient
-        get() = dynamicCredentials?.userName ?: "solrserver"
-    override val password
-        @Transient
-        get() = dynamicCredentials?.getPasswordAsString() ?: "server123"
 
     override fun mutable() = Mutable(
         uuid = uuid,
@@ -73,13 +61,11 @@ data class SolrConnectionSettingsState(
         override var webroot: String,
         override var ssl: Boolean,
         override var timeout: Int,
+        override var modified: Boolean = false,
+        override val username: ObservableMutableProperty<String> = AtomicProperty(""),
+        override val password: ObservableMutableProperty<String> = AtomicProperty(""),
         var socketTimeout: Int,
     ) : ExecConnectionSettingsState.Mutable {
-
-        override val username
-            get() = retrieveCredentials()?.userName ?: "solrserver"
-        override val password
-            get() = retrieveCredentials()?.getPasswordAsString() ?: "server123"
 
         override fun immutable() = SolrConnectionSettingsState(
             uuid = uuid,
@@ -91,6 +77,6 @@ data class SolrConnectionSettingsState(
             ssl = ssl,
             timeout = timeout,
             socketTimeout = socketTimeout,
-        )
+        ) to Credentials(username.get(), password.get())
     }
 }

@@ -18,7 +18,6 @@
 
 package sap.commerce.toolset.hac.ui
 
-import com.intellij.credentialStore.Credentials
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.openapi.project.Project
@@ -32,9 +31,9 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
 import sap.commerce.toolset.exec.ExecConstants
 import sap.commerce.toolset.exec.settings.state.ExecConnectionScope
-import sap.commerce.toolset.exec.settings.state.generatedURL
 import sap.commerce.toolset.exec.ui.ConnectionSettingsDialog
 import sap.commerce.toolset.exec.ui.WSL_PROXY_CONNECT_LOCALHOST
+import sap.commerce.toolset.hac.exec.HacExecConnectionService
 import sap.commerce.toolset.hac.exec.http.HacHttpClient
 import sap.commerce.toolset.hac.exec.settings.state.HacConnectionSettingsState
 import java.awt.Component
@@ -47,8 +46,9 @@ import javax.swing.JLabel
 class HacConnectionSettingsDialog(
     project: Project,
     parentComponent: Component,
-    settings: HacConnectionSettingsState.Mutable
-) : ConnectionSettingsDialog<HacConnectionSettingsState.Mutable>(project, parentComponent, settings, "Remote SAP Commerce Instance") {
+    settings: HacConnectionSettingsState.Mutable,
+    dialogTitle: String,
+) : ConnectionSettingsDialog<HacConnectionSettingsState.Mutable>(project, parentComponent, settings, dialogTitle) {
 
     private lateinit var sslProtocolComboBox: ComboBox<String>
     private lateinit var sessionCookieNameTextField: JBTextField
@@ -57,6 +57,9 @@ class HacConnectionSettingsDialog(
     private lateinit var wslProxyWarningComment: JEditorPane
     private lateinit var wslDistributionText: Cell<JLabel>
     private var isWslCheckBox: JBCheckBox? = null
+
+    override fun retrieveCredentials(mutable: HacConnectionSettingsState.Mutable) = HacExecConnectionService.getInstance(project)
+        .getCredentials(mutable.immutable().first)
 
     override fun testConnection(): String = HacHttpClient.getInstance(project).testConnection(
         HacConnectionSettingsState(
@@ -68,8 +71,9 @@ class HacConnectionSettingsDialog(
             webroot = webrootTextField.text,
             timeout = timeoutIntSpinner.number,
             sessionCookieName = sessionCookieNameTextField.text.takeIf { !it.isNullOrBlank() } ?: ExecConstants.DEFAULT_SESSION_COOKIE_NAME,
-            credentials = Credentials(usernameTextField.text, String(passwordTextField.password)),
-        )
+        ),
+        mutable.username.get(),
+        mutable.password.get(),
     )
 
     override fun panel() = panel {
@@ -78,7 +82,7 @@ class HacConnectionSettingsDialog(
                 .bold()
             connectionNameTextField = textField()
                 .align(AlignX.FILL)
-                .bindText(mutableSettings::name.toNonNullableProperty(""))
+                .bindText(mutable::name.toNonNullableProperty(""))
                 .component
         }.layout(RowLayout.PARENT_GRID)
 
@@ -89,19 +93,19 @@ class HacConnectionSettingsDialog(
                 EnumComboBoxModel(ExecConnectionScope::class.java),
                 renderer = SimpleListCellRenderer.create("?") { it.title }
             )
-                .bindItem(mutableSettings::scope.toNullableProperty(ExecConnectionScope.PROJECT_PERSONAL))
+                .bindItem(mutable::scope.toNullableProperty(ExecConnectionScope.PROJECT_PERSONAL))
         }.layout(RowLayout.PARENT_GRID)
 
         row {
-            timeoutIntSpinner = spinner(1000 ..Int.MAX_VALUE, 1000)
+            timeoutIntSpinner = spinner(1000..Int.MAX_VALUE, 1000)
                 .label("Connection Timeout (ms):")
-                .bindIntValue(mutableSettings::timeout)
+                .bindIntValue(mutable::timeout)
                 .component
         }.layout(RowLayout.PARENT_GRID)
 
         group("Full URL Preview", false) {
             row {
-                urlPreviewLabel = label(mutableSettings.immutable().generatedURL)
+                urlPreviewLabel = label(mutable.generatedURL)
                     .bold()
                     .align(AlignX.FILL)
                     .component
@@ -122,7 +126,7 @@ class HacConnectionSettingsDialog(
                 hostTextField = textField()
                     .comment("Host name or IP address")
                     .align(AlignX.FILL)
-                    .bindText(mutableSettings::host)
+                    .bindText(mutable::host)
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .addValidationRule("Address cannot be blank.") { it.text.isNullOrBlank() }
                     .component
@@ -132,7 +136,7 @@ class HacConnectionSettingsDialog(
                 label("Port:")
                 portTextField = textField()
                     .align(AlignX.FILL)
-                    .bindText(mutableSettings::port.toNonNullableProperty(""))
+                    .bindText(mutable::port.toNonNullableProperty(""))
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .addValidationRule("Port should be blank or in a range of 1..65535.") {
                         if (it.text.isNullOrBlank()) return@addValidationRule false
@@ -145,7 +149,7 @@ class HacConnectionSettingsDialog(
 
             row {
                 sslProtocolCheckBox = checkBox("SSL:")
-                    .bindSelected(mutableSettings::ssl)
+                    .bindSelected(mutable::ssl)
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .component
                 sslProtocolComboBox = comboBox(
@@ -157,7 +161,7 @@ class HacConnectionSettingsDialog(
                     renderer = SimpleListCellRenderer.create("?") { it }
                 )
                     .enabledIf(sslProtocolCheckBox.selected)
-                    .bindItem(mutableSettings::sslProtocol.toNullableProperty())
+                    .bindItem(mutable::sslProtocol.toNullableProperty())
                     .align(AlignX.FILL)
                     .component
             }.layout(RowLayout.PARENT_GRID)
@@ -166,7 +170,7 @@ class HacConnectionSettingsDialog(
                 label("Webroot:")
                 webrootTextField = textField()
                     .align(AlignX.FILL)
-                    .bindText(mutableSettings::webroot)
+                    .bindText(mutable::webroot)
                     .onChanged { urlPreviewLabel.text = generateUrl() }
                     .component
             }.layout(RowLayout.PARENT_GRID)
@@ -176,7 +180,7 @@ class HacConnectionSettingsDialog(
                 sessionCookieNameTextField = textField()
                     .comment("Optional: override the session cookie name. Default is JSESSIONID.")
                     .align(AlignX.FILL)
-                    .bindText(mutableSettings::sessionCookieName)
+                    .bindText(mutable::sessionCookieName)
                     .apply { component.text = "" }
                     .component
             }.layout(RowLayout.PARENT_GRID)
@@ -191,7 +195,8 @@ class HacConnectionSettingsDialog(
                 label("Username:")
                 usernameTextField = textField()
                     .align(AlignX.FILL)
-                    .enabled(false)
+                    .bindText(mutable.username)
+                    .enabledIf(editableCredentials)
                     .addValidationRule("Username cannot be blank.") { it.text.isNullOrBlank() }
                     .component
             }.layout(RowLayout.PARENT_GRID)
@@ -200,7 +205,8 @@ class HacConnectionSettingsDialog(
                 label("Password:")
                 passwordTextField = passwordField()
                     .align(AlignX.FILL)
-                    .enabled(false)
+                    .bindText(mutable.password)
+                    .enabledIf(editableCredentials)
                     .addValidationRule("Password cannot be blank.") { it.password.isEmpty() }
                     .component
             }.layout(RowLayout.PARENT_GRID)
@@ -222,7 +228,7 @@ class HacConnectionSettingsDialog(
         val distributions = WslDistributionManager.getInstance().installedDistributions
         row {
             isWslCheckBox = checkBox("WSL")
-                .bindSelected(mutableSettings::wsl)
+                .bindSelected(mutable::wsl)
                 .selected(false)
                 .visible(distributions.isNotEmpty())
                 .onChanged {

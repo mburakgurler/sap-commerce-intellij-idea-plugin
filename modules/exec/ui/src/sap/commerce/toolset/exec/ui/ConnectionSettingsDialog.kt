@@ -18,11 +18,10 @@
 
 package sap.commerce.toolset.exec.ui
 
-import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -49,13 +48,14 @@ import javax.swing.JLabel
 
 const val WSL_PROXY_CONNECT_LOCALHOST = "wsl.proxy.connect.localhost"
 
-abstract class ConnectionSettingsDialog<T: ExecConnectionSettingsState.Mutable>(
+abstract class ConnectionSettingsDialog<M : ExecConnectionSettingsState.Mutable>(
     protected val project: Project,
     parentComponent: Component,
-    protected val mutableSettings: T,
+    protected val mutable: M,
     dialogTitle: String
 ) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
 
+    protected val editableCredentials = AtomicBooleanProperty(false)
     protected lateinit var connectionNameTextField: JBTextField
     protected lateinit var urlPreviewLabel: JLabel
     protected lateinit var hostTextField: JBTextField
@@ -112,22 +112,16 @@ abstract class ConnectionSettingsDialog<T: ExecConnectionSettingsState.Mutable>(
 
     protected abstract fun testConnection(): String?
     protected abstract fun panel(): DialogPanel
+    protected abstract fun retrieveCredentials(mutable: M): Credentials
 
     init {
         title = dialogTitle
         super.init()
     }
 
-    override fun applyFields() {
-        super.applyFields()
-
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Persisting credentials", false) {
-            override fun run(indicator: ProgressIndicator) {
-                val credentialAttributes = CredentialAttributes("SAP CX - ${mutableSettings.uuid}")
-                PasswordSafe.instance.set(credentialAttributes, Credentials(usernameTextField.text, String(passwordTextField.password)))
-            }
-        })
-    }
+    override fun createLeftSideActions() = arrayOf(testConnectionButton)
+    override fun getStyle() = DialogStyle.COMPACT
+    override fun getPreferredFocusedComponent() = connectionNameTextField
 
     override fun createCenterPanel() = with(panel()) {
         border = JBUI.Borders.empty(16)
@@ -135,21 +129,29 @@ abstract class ConnectionSettingsDialog<T: ExecConnectionSettingsState.Mutable>(
         this
     }
 
+    override fun applyFields() {
+        super.applyFields()
+        // always modified if user clicked Apply button
+        mutable.modified = true
+    }
+
     private fun loadCredentials() {
+        if (mutable.modified) {
+            editableCredentials.set(true)
+            return
+        }
+
         ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Retrieving credentials", false) {
             override fun run(indicator: ProgressIndicator) {
-                passwordTextField.text = mutableSettings.password
-                passwordTextField.isEnabled = true
+                val credentials = retrieveCredentials(mutable)
 
-                usernameTextField.text = mutableSettings.username
-                usernameTextField.isEnabled = true
+                mutable.username.set(credentials.userName ?: "")
+                mutable.password.set(credentials.getPasswordAsString() ?: "")
+
+                editableCredentials.set(true)
             }
         })
     }
-
-    override fun createLeftSideActions() = arrayOf(testConnectionButton)
-    override fun getStyle() = DialogStyle.COMPACT
-    override fun getPreferredFocusedComponent() = connectionNameTextField
 
     protected fun generateUrl() = sap.commerce.toolset.exec.generateUrl(
         sslProtocolCheckBox.isSelected,

@@ -18,9 +18,14 @@
 
 package sap.commerce.toolset.exec
 
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import sap.commerce.toolset.exec.settings.event.ExecConnectionListener
-import sap.commerce.toolset.exec.settings.state.ExecConnectionScope
 import sap.commerce.toolset.exec.settings.state.ExecConnectionSettingsState
 import sap.commerce.toolset.project.PropertyService
 
@@ -30,30 +35,58 @@ abstract class ExecConnectionService<T : ExecConnectionSettingsState>(protected 
     abstract val connections: List<T>
 
     protected abstract val listener: ExecConnectionListener<T>
-    protected abstract fun save(settings: Map<ExecConnectionScope, List<T>>, notify: Boolean = true)
 
-    protected fun onActivate(settings: T, notify: Boolean = true) = if (notify) listener.onActive(settings) else Unit
-    protected fun onAdd(settings: T, notify: Boolean = true) = if (notify) listener.onAdded(settings) else Unit
-    protected fun onRemove(settings: T, notify: Boolean = true) = if (notify) listener.onRemoved(settings) else Unit
-    protected fun onSave(settings: Map<ExecConnectionScope, List<T>>, notify: Boolean = true) = if (notify) listener.onSave(settings) else Unit
-
+    abstract fun defaultCredentials(settings: T): Credentials
     abstract fun default(): T
-    abstract fun add(settings: T, notify: Boolean = true)
-    abstract fun remove(settings: T, notify: Boolean = true)
+    abstract fun delete(settings: T, notify: Boolean = true)
+    abstract fun create(settings: Pair<T, Credentials>, notify: Boolean = true)
+    abstract fun save(settings: Map<T, Credentials>)
 
-    fun save(settings: Collection<T>) = save(
-        settings.groupBy { it.scope }
-            .mapValues { (_, v) -> v.toList() }
-    )
+    fun getCredentials(settings: T) = PasswordSafe.instance.get(CredentialAttributes("SAP CX - ${settings.uuid}"))
+        ?: defaultCredentials(settings)
 
-    fun save(settings: T) {
-        remove(settings, notify = false)
-        add(settings, notify = false)
+    fun update(settings: Pair<T, Credentials>) = update(mapOf(settings))
 
-        onSave(mapOf(settings.scope to listOf(settings)))
+    fun update(settings: Map<T, Credentials>) {
+        settings.keys.forEach { delete(it, notify = false) }
+        settings.forEach { create(it.key to it.value, notify = false) }
+
+        onUpdate(settings)
     }
 
-    fun getPropertyOrDefault(project: Project, key: String, fallback: String) = PropertyService.getInstance(project)
+    protected fun removeCredentials(settings: T) = saveCredentials(settings to null)
+
+    protected fun onActivate(settings: T, notify: Boolean = true) = if (notify) listener.onActive(settings) else Unit
+    protected fun onDelete(settings: T, notify: Boolean = true) {
+        removeCredentials(settings)
+        if (notify) listener.onDelete(settings) else Unit
+    }
+
+    protected fun onCreate(settings: Pair<T, Credentials>, notify: Boolean = true) = if (notify) {
+        saveCredentials(settings)
+        listener.onCreate(settings.first)
+    } else Unit
+
+    protected fun onUpdate(settings: Map<T, Credentials>, notify: Boolean = true) {
+        settings.forEach { saveCredentials(it.key to it.value) }
+        if (notify) listener.onUpdate(settings.keys)
+    }
+
+    protected fun onSave(settings: Map<T, Credentials>) {
+        settings.forEach { saveCredentials(it.key to it.value) }
+        listener.onSave(settings.keys)
+    }
+
+    private fun saveCredentials(settings: Pair<T, Credentials?>) {
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, "Persisting credentials", false) {
+            override fun run(indicator: ProgressIndicator) {
+                val credentialAttributes = CredentialAttributes("SAP CX - ${settings.first.uuid}")
+                PasswordSafe.instance.set(credentialAttributes, settings.second)
+            }
+        })
+    }
+
+    protected fun getPropertyOrDefault(project: Project, key: String, fallback: String) = PropertyService.getInstance(project)
         .findProperty(key)
         ?: fallback
 }

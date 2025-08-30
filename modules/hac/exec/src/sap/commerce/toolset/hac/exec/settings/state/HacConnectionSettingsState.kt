@@ -18,11 +18,10 @@
 
 package sap.commerce.toolset.hac.exec.settings.state
 
-import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
-import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.observable.properties.AtomicProperty
+import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.util.xmlb.annotations.OptionTag
-import com.intellij.util.xmlb.annotations.Transient
 import sap.commerce.toolset.exec.ExecConstants
 import sap.commerce.toolset.exec.settings.state.ExecConnectionScope
 import sap.commerce.toolset.exec.settings.state.ExecConnectionSettingsState
@@ -40,24 +39,10 @@ data class HacConnectionSettingsState(
     @OptionTag override val ssl: Boolean = true,
     @OptionTag override val timeout: Int = HacExecConstants.DEFAULT_TIMEOUT,
 
-    @Transient
-    override val credentials: Credentials? = null,
-
     @JvmField @OptionTag val wsl: Boolean = false,
     @JvmField @OptionTag val sslProtocol: String = "TLSv1.2",
     @JvmField @OptionTag val sessionCookieName: String = ExecConstants.DEFAULT_SESSION_COOKIE_NAME,
 ) : ExecConnectionSettingsState {
-
-    private val dynamicCredentials
-        @Transient
-        get() = credentials
-            ?: PasswordSafe.instance.get(CredentialAttributes("SAP CX - $uuid"))
-    override val username
-        @Transient
-        get() = dynamicCredentials?.userName ?: DEFAULT_USERNAME
-    override val password
-        @Transient
-        get() = dynamicCredentials?.getPasswordAsString() ?: DEFAULT_PASSWORD
 
     override fun mutable() = Mutable(
         uuid = uuid,
@@ -82,19 +67,13 @@ data class HacConnectionSettingsState(
         override var webroot: String,
         override var ssl: Boolean,
         override var timeout: Int,
+        override var modified: Boolean = false,
+        override val username: ObservableMutableProperty<String> = AtomicProperty(""),
+        override val password: ObservableMutableProperty<String> = AtomicProperty(""),
         var wsl: Boolean,
         var sslProtocol: String,
         var sessionCookieName: String,
     ) : ExecConnectionSettingsState.Mutable {
-
-        override val username
-            get() = PasswordSafe.instance.get(CredentialAttributes("SAP CX - $uuid"))
-                ?.userName
-                ?: DEFAULT_USERNAME
-        override val password
-            get() = PasswordSafe.instance.get(CredentialAttributes("SAP CX - $uuid"))
-                ?.getPasswordAsString()
-                ?: DEFAULT_PASSWORD
 
         override fun immutable() = HacConnectionSettingsState(
             uuid = uuid,
@@ -107,12 +86,7 @@ data class HacConnectionSettingsState(
             timeout = timeout,
             wsl = wsl,
             sslProtocol = sslProtocol,
-            sessionCookieName = sessionCookieName
-        )
-    }
-
-    companion object {
-        private const val DEFAULT_USERNAME = "admin"
-        private const val DEFAULT_PASSWORD = "nimda"
+            sessionCookieName = sessionCookieName,
+        ) to Credentials(username.get(), password.get())
     }
 }
