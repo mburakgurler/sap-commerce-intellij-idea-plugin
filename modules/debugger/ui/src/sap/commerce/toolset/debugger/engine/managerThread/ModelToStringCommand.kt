@@ -29,13 +29,15 @@ import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl
 import com.intellij.debugger.ui.tree.ValueDescriptor
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.debugger.ui.tree.render.ToStringCommand
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.rd.util.firstOrNull
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Type
 import com.sun.jdi.Value
 import sap.commerce.toolset.debugger.DebuggerConstants
+import sap.commerce.toolset.debugger.toTypeCode
+import sap.commerce.toolset.typeSystem.meta.TSMetaModelAccess
 
 internal class ModelToStringCommand(
     private val valueDescriptor: ValueDescriptor,
@@ -58,7 +60,7 @@ internal class ModelToStringCommand(
 
     override fun action() {
         val project = evaluationContext.project
-        val expression = value.type().toStringExpression.trimIndent()
+        val expression = toStringExpression(value.type(), project).trimIndent()
         val text = DebuggerUtils.getInstance().createExpressionWithImports(expression)
 
         val descriptor = UserExpressionData(
@@ -73,8 +75,7 @@ internal class ModelToStringCommand(
             val calcValue = descriptor.calcValue(evaluationContext as EvaluationContextImpl)
             val valueAsString = DebuggerUtils.getValueAsString(evaluationContext, calcValue)
             evaluationResult(valueAsString)
-        } catch (e: EvaluateException) {
-            thisLogger().warn(e)
+        } catch (_: EvaluateException) {
             fallback(evaluationContext, value)
         }
     }
@@ -88,10 +89,27 @@ internal class ModelToStringCommand(
         }
     }
 
-    private val Type.toStringExpression
-        get() = DebuggerConstants.TO_STRING_MAPPING
-            .filterKeys { DebuggerUtils.instanceOf(this, it) }
-            .firstOrNull()
-            ?.value
-            ?: DebuggerConstants.ITEM;
+    private fun toStringExpression(type: Type, project: Project) = DebuggerConstants.TO_STRING_MAPPING
+        .filterKeys { DebuggerUtils.instanceOf(type, it) }
+        .firstOrNull()
+        ?.value
+        ?: fallbackToTypeSystem(type, project)
+        ?: DebuggerConstants.ITEM;
+
+    private fun fallbackToTypeSystem(type: Type, project: Project): String? {
+        val typeCode = type.name().toTypeCode()
+        val mappingTypecode2Getters = TSMetaModelAccess.getInstance(project).getTypecode2Mapping()
+
+        val getters = mappingTypecode2Getters[typeCode]
+            ?.take(3)
+            ?.sorted()
+            ?.joinToString(" + \" | \" + ") { it }
+            ?: return null
+
+        return """
+            ${DebuggerConstants.PK}
+            
+            pk + " | " + $getters
+        """.trimIndent()
+    }
 }
