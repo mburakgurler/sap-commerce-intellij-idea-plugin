@@ -31,13 +31,21 @@ internal object CompilerOutputPathsConfiguratorEx {
         modifiableRootModel: ModifiableRootModel,
         moduleDescriptor: ModuleDescriptor
     ) {
-        val useFakeOutputPathForCustomExtensions = moduleDescriptor.rootProjectDescriptor.isUseFakeOutputPathForCustomExtensions
-        val outputDirectory = if (moduleDescriptor.descriptorType == ModuleDescriptorType.CUSTOM && !useFakeOutputPathForCustomExtensions)
-            File(moduleDescriptor.moduleRootDirectory, HybrisConstants.JAVA_COMPILER_OUTPUT_PATH)
-        else
-            File(moduleDescriptor.moduleRootDirectory, HybrisConstants.JAVA_COMPILER_FAKE_OUTPUT_PATH)
+        val rootProjectDescriptor = moduleDescriptor.rootProjectDescriptor
+        val fakeOutputPath = rootProjectDescriptor.isUseFakeOutputPathForCustomExtensions
+        val ootbReadonlyMode = rootProjectDescriptor.isImportOotbModulesInReadOnlyMode
 
-        with (modifiableRootModel.getModuleExtension(CompilerModuleExtension::class.java)) {
+        val output = if (moduleDescriptor.descriptorType == ModuleDescriptorType.CUSTOM) {
+            if (fakeOutputPath) HybrisConstants.JAVA_COMPILER_FAKE_OUTPUT_PATH
+            else HybrisConstants.JAVA_COMPILER_OUTPUT_PATH
+        } else {
+            if (ootbReadonlyMode || fakeOutputPath) HybrisConstants.JAVA_COMPILER_FAKE_OUTPUT_PATH
+            else HybrisConstants.JAVA_COMPILER_OUTPUT_PATH
+        }
+
+        val outputDirectory = File(moduleDescriptor.moduleRootDirectory, output)
+
+        with(modifiableRootModel.getModuleExtension(CompilerModuleExtension::class.java)) {
             setCompilerOutputPath(VfsUtilCore.pathToUrl(outputDirectory.absolutePath))
             setCompilerOutputPathForTests(VfsUtilCore.pathToUrl(outputDirectory.absolutePath))
 
