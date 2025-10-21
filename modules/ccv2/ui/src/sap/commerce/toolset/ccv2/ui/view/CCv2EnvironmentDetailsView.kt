@@ -23,6 +23,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ide.CopyPasteManager
@@ -38,8 +39,7 @@ import com.intellij.util.ui.JBUI
 import sap.commerce.toolset.HybrisIcons
 import sap.commerce.toolset.Notifications
 import sap.commerce.toolset.ccv2.CCv2Service
-import sap.commerce.toolset.ccv2.actionSystem.CCv2FetchEnvironmentAction
-import sap.commerce.toolset.ccv2.actionSystem.CCv2ShowServiceDetailsAction
+import sap.commerce.toolset.ccv2.CCv2UiConstants
 import sap.commerce.toolset.ccv2.dto.CCv2BuildDto
 import sap.commerce.toolset.ccv2.dto.CCv2DataBackupDto
 import sap.commerce.toolset.ccv2.dto.CCv2EnvironmentDto
@@ -47,6 +47,7 @@ import sap.commerce.toolset.ccv2.dto.CCv2ServiceDto
 import sap.commerce.toolset.ccv2.settings.state.CCv2Subscription
 import sap.commerce.toolset.ccv2.toolwindow.CCv2ViewUtil
 import sap.commerce.toolset.ccv2.ui.*
+import sap.commerce.toolset.ui.actionButton
 import sap.commerce.toolset.ui.scrollPanel
 import java.awt.GridBagLayout
 import java.awt.datatransfer.StringSelection
@@ -55,7 +56,7 @@ import java.io.Serial
 class CCv2EnvironmentDetailsView(
     private val project: Project,
     private val subscription: CCv2Subscription,
-    environment: CCv2EnvironmentDto
+    private val environment: CCv2EnvironmentDto
 ) : SimpleToolWindowPanel(false, true), Disposable {
 
     private val showBuild = AtomicBooleanProperty(environment.deployedBuild != null)
@@ -77,23 +78,26 @@ class CCv2EnvironmentDetailsView(
         initPanel(environment)
     }
 
+    override fun uiDataSnapshot(sink: DataSink) {
+        super.uiDataSnapshot(sink)
+
+        sink[CCv2UiConstants.DataKeys.Subscription] = subscription
+        sink[CCv2UiConstants.DataKeys.Environment] = environment
+        sink[CCv2UiConstants.DataKeys.EnvironmentCallback] = {
+            // hard reset env details on re-fetch
+            it.services = null
+            it.dataBackups = null
+            it.deployedBuild = null
+
+            initPanel(it)
+        }
+    }
+
     private fun installToolbar(environment: CCv2EnvironmentDto) {
         val toolbar = with(DefaultActionGroup()) {
             val actionManager = ActionManager.getInstance()
 
-            add(
-                CCv2FetchEnvironmentAction(
-                    subscription,
-                    environment,
-                    {
-                        // hard reset env details on re-fetch
-                        it.services = null
-                        it.dataBackups = null
-                        it.deployedBuild = null
-
-                        initPanel(it)
-                    }
-                ))
+            add(actionManager.getAction("ccv2.environment.fetch.action"))
             add(actionManager.getAction("ccv2.reset.cache.action"))
             addSeparator()
 
@@ -250,9 +254,13 @@ class CCv2EnvironmentDetailsView(
                 panel {
                     row {
                         actionButton(
-                            CCv2ShowServiceDetailsAction(subscription, environment, service),
+                            ActionManager.getInstance().getAction("ccv2.service.showDetails.action"),
                             ActionPlaces.TOOLWINDOW_CONTENT
-                        )
+                        ) {
+                            it[CCv2UiConstants.DataKeys.Subscription] = subscription
+                            it[CCv2UiConstants.DataKeys.Environment] = environment
+                            it[CCv2UiConstants.DataKeys.Service] = service
+                        }
                     }
                 }.gap(RightGap.SMALL)
 
